@@ -1,43 +1,26 @@
 import { NavLink } from "react-router-dom";
 
 const NavBar = () => {
-    const navItems = [
-        { name: "Tasks", path: "/tasks" },
-        { name: "Goals", path: "/goals" },
-        { name: "Reminders", path: "/reminders" },
-        { name: "Habits", path: "/habits" },
-        { name: "Settings", path: "/settings" },
-    ];
+  const linkStyle = ({ isActive }) => ({
+    textDecoration: "none",
+    fontWeight: "bold",
+    color: isActive ? "#4f46e5" : "#6b7280", // Purple if active, gray if not
+    paddingBottom: isActive ? "2px" : "0",
+    borderBottom: isActive ? "2px solid #4f46e5" : "none"
+  });
 
-    return (
-        <nav className="w-full bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-indigo-600 mr-8">
-                HabitFlow
-            </h1>
-
-            <div className="flex gap-6">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            `text-sm font-medium transition-colors ${
-                                isActive
-                                    ? "text-indigo-600 border-b-2 border-indigo-600 pb-1"
-                                    : "text-gray-500 hover:text-gray-900"
-                            }`
-                        }
-                    >
-                        {item.name}
-                    </NavLink>
-                ))}
-            </div>
-
-            <NavLink to="/login" className="text-sm text-red-500 font-medium">
-                Logout
-            </NavLink>
-        </nav>
-    );
+  return (
+    <nav style={{ display: "flex", alignItems: "center", height: "100%", padding: "0 30px", gap: "30px" }}>
+      <h2 style={{ marginRight: "auto", margin: 0, fontSize: "20px", color: "#111" }}>HabitFlow</h2>
+      
+      <NavLink to="/tasks" style={linkStyle}>Tasks</NavLink>
+      <NavLink to="/goals" style={linkStyle}>Goals</NavLink>
+      <NavLink to="/reminders" style={linkStyle}>Reminders</NavLink>
+      <NavLink to="/habits" style={linkStyle}>Habits</NavLink>
+      
+      <NavLink to="/settings" style={{ ...linkStyle({isActive: false}), marginLeft: "20px" }}>Settings</NavLink>
+    </nav>
+  );
 };
 
 export default NavBar;

@@ -1,0 +1,135 @@
+Main Layout is a centered div that contains all other components
+3 Components are
+- Content
+- Calendar
+- Upcoming Tab
+
+1. Content Component
+    - split into 2 rows 
+        - top row is navigation between 4 tabs [tasks, goals, reminders, habits]. it has a fixed height and takes 100% width
+        - bottom row is further split into 2 rows:
+            - here the top is the table that contains the data
+            - bottom is the input fields which differ based on which tab you are on.
+    - it can be also just be split into 3 rows [nav, table, input] with the input fields changing dynamically depending on which tab you are
+    - the 4 tabs are
+        1. tasks
+            - the db tasks table columns are:
+                - task_id - uid (this wont be shown in the frontend)
+                - task - the task text
+                - tags - list of tags you can create and customize
+                - date - date when you need to complete
+                - note - text field for notes on a specific task
+                - created date
+                - status - list of pre defined values like ['not started(default)', 'started', 'cancelled', 'on hold', 'delayed', 'completed']
+            - when you want to create a task you can input:
+                - the task
+                - select the tags [multiple can be selected]
+                - pick a date
+                - click add (this will create a entry in the db)
+            - to edit a task:
+                1. to edit the status or tag of the table data row, simply click on that data item and you can select within a dropdown the list of available options
+                2. simply click on the table data row and a drawer object like one from shadcn/ui will open up. it will have the following fields which you can edit
+                    - task
+                    - status
+                    - tag
+                    - date
+                    - note (notes can only be added after creating a task and when u click on the data row item to edit a task)
+                    - a delete task button
+            - in the frontend table the columns that should be shown are task, status, tags, date .
+            - tasks should disappear from the table once they are marked as complete. but not deleted from the database
+        2. goals
+            - the db goal tables colums are:
+                - goal_id - uid
+                - goal - text
+                - priority - list of predefined values like ['high','medium', 'low']
+                - date - date
+                - created date
+            - when you want to create a goal you can simply enter:
+                - the goal
+                - select the priority
+                - pick a date
+                - click add (this will create a entry in the db)
+            - to edit a goal:
+                - click the data row and a drawer component like in shadcn ui will open up. and you can edit:
+                    - goal
+                    - priority
+                    - date
+                    - mark completed button
+                    - delete goal button
+            - in the frontend table the columns that should be shown are goal, priority, date.
+            - goals should disappear after they r marked completed.
+        3. reminders
+            - the db reminder tables columns are:
+                - reminder_id - uid
+                - reminder - text 
+                - time - time 
+                - date - date
+                - created date
+                - repeat - list of predefined values like [no repeat, daily, weekly, bi-weekly, monthly] and also custom repeat time
+            - when u want to create a reminder, input:
+                - text
+                - choose time and date
+                - choose repeat, if no option is given, set to no repeat.
+                - click add (this will create a entry in the db)
+            - to edit a reminder:
+                - click the data row and a drawer component like in shadcn ui will open up. and you can edit:
+                    - reminder
+                    - time
+                    - date
+                    - repeat 
+                    - delete reminder button
+            - in the frontend table the columns that should be shown are reminder, time, date, repeat frequency.
+            - reminders should disappear after their time runs out.
+        4. habits
+            - the db habit tables columns are
+                - habit_id - uid (this wont be shown in the frontend)
+                - habit - the habit text
+                - frequency - the schedule (e.g. Daily, [Mon, Wed, Fri])
+                - completed_dates - array of dates that the habit was completed
+            - habits will not be shown as a table, they will be shown with their name, streak and a mark completed button for the day.
+            - when you want to create habit, input:
+                - habit
+                - frequency
+            - to edit a habit:
+                - click the Habit item and a drawer component like in shadcn ui will open up. and you can edit:
+                    - habit
+                    - frequency
+                    - delete button
+            - additionally when the drawer opens you can see the contribution graph for the past 6 months
+
+
+2. Upcoming Tab
+    - it shows the upcoming tasks, goals and reminders whose dates are within 7 days from the current
+    - it is a div thats divided into 2 rows, 
+        - the top div says 'upcoming tasks'
+        - the bottom div is the largest, it contains smaller divs that show the upcoming items
+    - when an item is clicked in the upcoming tab, it should open the editing menu that is the drawer for that specific item
+
+3. Calendar Component
+    - Shows dates and highlights current day. 
+    - when a specific date is clicked, the upcoming tab shows the items (tasks, goals, reminders) whose date fields match the selected date
+
+Other components are:
+- settings 
+    - edit account info [username, password, email]
+    - view completed items (items that are hidden from main menu)
+    - export data
+    - light mode
+    - select accent color
+    - logout
+
+Technologies Used
+    - Front end with react router
+        Routes
+        - /dashboard/tasks
+        - /dashboard/goals
+        - /dashboard/reminders
+        - /dashboard/habits
+        - /login 
+        - /logout
+        - /register
+        - /settings
+    - Backend with Python
+        - API gets data from neon db and sends to front end
+        - handles auth
+    - Database is Postgres with Neon
