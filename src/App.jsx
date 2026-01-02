@@ -1,32 +1,41 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import DashboardLayout from "./DashboardLayout";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Import your existing pages
-import Tasks from "./pages/modules/Tasks";
-import Goals from "./pages/modules/Goals";
-import Reminders from "./pages/modules/Reminders";
-import Habits from "./pages/modules/Habits";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-// import Settings from "./pages/modules/Settings"; // Uncomment if you created Settings.jsx
+// Import your pages
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Settings from './pages/Settings';
+import DashboardLayout from './DashboardLayout';
+import Tasks from './pages/Tasks';
+import Goals from './pages/Goals';
+import Reminders from './pages/Reminders';
+import Habits from './pages/Habits';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <BrowserRouter>
+      <Routes>
+        {/* Standalone Pages */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* The Dashboard Layout wraps these routes */}
-      <Route element={<DashboardLayout />}>
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/goals" element={<Goals />} />
-        <Route path="/reminders" element={<Reminders />} />
-        <Route path="/habits" element={<Habits />} />
-        {/* <Route path="/settings" element={<Settings />} /> */}
-      </Route>
 
-      <Route path="/" element={<Navigate to="/tasks" replace />} />
-    </Routes>
+        {/* Dashboard Layout (Parent) */}
+        <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<Navigate to="tasks" replace />} />
+                <Route path="tasks" element={<Tasks />} />
+                <Route path="goals" element={<Goals />} />
+                <Route path="reminders" element={<Reminders />} />
+                <Route path="habits" element={<Habits />} />
+            </Route>
+            <Route path="/settings" element={<Settings />} />
+        </Route>
+
+        {/* Fallback: Redirect unknown URLs to login */}
+        <Route path="*" element={<Navigate to="/dashboard/tasks" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
