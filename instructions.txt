@@ -1,3 +1,15 @@
+Color Scheme
+    - body color: 09090B
+    - text color: ffffff 100%
+    - container background color: 18181B
+    - input fields: 222225
+    - input fields placeholder text: ffffff 75%
+    - borders: ffffff 50%
+
+use css variables for colors & size related stuff like borders & fonts
+
+
+
 Main Layout is a centered div that contains all other components
 3 Components are
 - Content
@@ -121,79 +133,68 @@ Other components are:
     - logout
 
 Technologies Used
-    - Front end with react router
-        Routes
-        - /dashboard/tasks
-        - /dashboard/goals
-        - /dashboard/reminders
-        - /dashboard/habits
-        - /login 
-        - /logout
-        - /register
-        - /settings
+    - Front end with react router (important)
+        -Routes
+            - /dashboard/tasks
+            - /dashboard/goals
+            - /dashboard/reminders
+            - /dashboard/habits
+            - /login 
+            - /logout
+            - /register
+            - /settings
+        - Routes are protected with auth, default / route should go to /dashboard/tasks
     - Backend with Python
         - API gets data from neon db and sends to front end
+        - API gets data from front end and sends to neon db
         - handles auth
     - Database is Postgres with Neon
 
 Backend
 takes data from frontend, processes data and send its over to neon db
 takes data from neon db, processes it and send back to front end
-create the routes as u require,
+create the API routes as u require, do not do routing with py, that is done with react router. only use py for apis and auth
 also handle auth with neon db
 
-db set up
--- Enable UUID extension for generating unique IDs
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Users Table (for Auth and Settings) [cite: 30, 31]
-CREATE TABLE users (
-    user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    accent_color TEXT DEFAULT 'blue' -- [cite: 30]
-);
+Design layout
+|--------------------------------------------------------------------|
+|   tasks  |   goals   |  reminders   |   habits   |                 |
+|--------------------------------------------------|    Calendar     |
+|              table data                          |                 |
+|                                                  |                 |
+|                                                  |                 |
+|                                                  |-----------------|
+|                                                  |  upcoming tab   |
+|                                                  |                 |
+|                                                  |                 |
+|                                                  |                 |
+|                                                  |                 |
+|                                                  |                 |
+|--------------------------------------------------|-----------------|   
+|  input fields and stuff                          |    settings     |
+|--------------------------------------------------|-----------------|                     
 
--- 2. Tasks Table
-CREATE TABLE tasks (
-    task_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- 
-    user_id UUID REFERENCES users(user_id), -- Links task to a user
-    task TEXT NOT NULL, -- 
-    tags TEXT[], -- Array of strings for tags 
-    target_date DATE, -- "date when you need to complete" 
-    note TEXT, -- 
-    status TEXT DEFAULT 'not started', -- [cite: 7]
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- [cite: 7]
-);
+Login Page should be a form with username and password
+Register should be form with username, password and email
+The Design Concept: The "Sliding Mask" Auth Card
+The Goal: Create a single rectangular card that handles both Login and Registration. Instead of switching pages, a colored "branding panel" slides back and forth across the card like a physical shutter to reveal the form underneath.
 
--- 3. Goals Table
-CREATE TABLE goals (
-    goal_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- [cite: 14]
-    user_id UUID REFERENCES users(user_id),
-    goal TEXT NOT NULL, -- [cite: 14]
-    priority TEXT, -- 'high', 'medium', 'low' [cite: 14]
-    target_date DATE, -- [cite: 14]
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- [cite: 14]
-);
+Visual Layout for Auth Card:
+- The Stage: One main box with a fixed size. Anything that moves "outside" of this box should be invisible.
+- The Forms: Place the Login form and the Register form inside the box. They should be sitting side-by-side, but only one is fully visible at a time.
+- The Shutter (Overlay): This is a colored panel (the "branding" side) that covers exactly half of the box. It contains text like "Welcome Back" or "Join Us."
 
--- 4. Reminders Table
-CREATE TABLE reminders (
-    reminder_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- [cite: 19]
-    user_id UUID REFERENCES users(user_id),
-    reminder TEXT NOT NULL, -- [cite: 19]
-    remind_time TIME, -- [cite: 19]
-    remind_date DATE, -- [cite: 19]
-    repeat_frequency TEXT, -- 'daily', 'weekly', etc. [cite: 19]
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- [cite: 19]
-);
+The Interaction (The "Logic"):
+- Sync with URL: The position of the shutter depends on the URL. If the user is at /login, the shutter is on the right. If they are at /register, the shutter is on the left.
+- The Switch: When a user clicks the button to switch (e.g., from Login to Register):
+    - The Shutter slides smoothly from right to left.
+    - The Forms underneath also shift to make room for the shutter.
+    - The Text inside the shutter should swap (e.g., "Welcome Back" disappears and "Hello Friend" appears).
 
--- 5. Habits Table
-CREATE TABLE habits (
-    habit_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- 
-    user_id UUID REFERENCES users(user_id),
-    habit TEXT NOT NULL, -- 
-    frequency TEXT, -- Schedule like 'Daily' or 'Mon, Wed' 
-    completed_dates DATE[] DEFAULT '{}' -- Array of dates 
-);
+The Movement Style:
+- The movement should be "snappy but smooth" (not a jump-cut).
+- While the shutter moves left, the content inside it should feel like it's moving slightly in the opposite direction to create a sense of depth (a parallax effect).
+- The transition should take about half a second.
+
+also card code a login username blzng and password 1234
