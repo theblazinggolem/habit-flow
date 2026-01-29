@@ -1,0 +1,104 @@
+.auth-container {
+    position: relative;
+    width: 800px;
+    height: 500px;
+    background-color: var(--container-bg);
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+}
+
+.auth-forms {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.form-wrapper {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    transition: transform 0.6s ease-in-out;
+}
+
+.auth-overlay {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(135deg, #333333 0%, #000000 100%);
+    color: white;
+    transform: translateX(0);
+    transition: transform 0.6s ease-in-out;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+    text-align: center;
+}
+
+/* Logic for sliding */
+.auth-container.register-mode .auth-overlay {
+    transform: translateX(-100%);
+}
+
+.auth-container.register-mode .form-wrapper {
+    /* optional: parallax or specific movements if needed */
+}
+
+/* Form Styles */
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-input {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    outline: none;
+}
+
+.auth-input::placeholder {
+    color: var(--text-placeholder);
+}
+
+.auth-btn {
+    background-color: #ffffff;
+    color: black;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: opacity 0.2s;
+}
+
+.auth-btn:hover {
+    opacity: 0.9;
+}
+
+.overlay-content {
+    transition: transform 0.6s ease-in-out;
+}
+
+.auth-container.register-mode .overlay-content {
+    /* content switch animation logic if needed */
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-weight: 600;
+}

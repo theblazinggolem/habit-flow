@@ -153,12 +153,13 @@ Technologies Used
 Backend
 takes data from frontend, processes data and send its over to neon db
 takes data from neon db, processes it and send back to front end
+this is all the backend does, no other functionality
 create the API routes as u require, do not do routing with py, that is done with react router. only use py for apis and auth
-also handle auth with neon db
+also handle auth with neon auth
 
 
 Design layout
-|--------------------------------------------------------------------|
+|--------------------------------------------------|-----------------|
 |   tasks  |   goals   |  reminders   |   habits   |                 |
 |--------------------------------------------------|    Calendar     |
 |              table data                          |                 |
@@ -175,6 +176,8 @@ Design layout
 |  input fields and stuff                          |    settings     |
 |--------------------------------------------------|-----------------|                     
 
+
+use neon auth for authentication 
 Login Page should be a form with username and password
 Register should be form with username, password and email
 The Design Concept: The "Sliding Mask" Auth Card
@@ -197,4 +200,6 @@ The Movement Style:
 - While the shutter moves left, the content inside it should feel like it's moving slightly in the opposite direction to create a sense of depth (a parallax effect).
 - The transition should take about half a second.
 
-also card code a login username blzng and password 1234
+also hard code a login username 'blzng' and password '1234'
+
+give me a list of env variables i need to add to the .env file
