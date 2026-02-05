@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "text": "MAKE 100K",
+        "priority": "MEDIUM",
+        "date": "2025-06-24"
+    },
+    {
+        "id": 2,
+        "text": "GET A JOB",
+        "priority": "HIGH",
+        "date": "2025-08-20"
+    }
+]

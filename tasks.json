@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "text": "MAKE BQ SITE",
+        "status": "IN PROGRESS",
+        "tag": "PROJECTS",
+        "date": "2025-06-24"
+    },
+    {
+        "id": 2,
+        "text": "ASSIGNMENT",
+        "status": "NOT STARTED",
+        "tag": "HOMEWORK",
+        "date": "2025-07-06"
+    }
+]
