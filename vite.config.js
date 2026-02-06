@@ -30,7 +30,7 @@ export default defineConfig({
               return;
             }
 
-            const dbPath = path.resolve(process.cwd(), `${type}.json`);
+            const dbPath = path.resolve(process.cwd(), 'data', `${type}.json`);
 
             if (req.method === 'GET') {
               try {

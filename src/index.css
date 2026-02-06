@@ -3,18 +3,21 @@
   --bg-panel: #18181B;
   --bg-input: #222225;
   --bg-hover: #27272a;
-  
-  --border-color: rgba(255, 255, 255, 0.5); /* 50% opacity */
-  
+
+  --border-color: rgba(255, 255, 255, 0.5);
+  /* 50% opacity */
+
   --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.75); /* 75% opacity */
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  /* 75% opacity */
   --text-muted: rgba(255, 255, 255, 0.5);
-  
+
   --accent-color: #FFFFFF;
   --accent-text: #000000;
   --danger-color: #ef4444;
 
-  --secondary-color: #586aea; /* Future use */
+  --secondary-color: #586aea;
+  /* Future use */
 
   --font-family: 'JetBrains Mono', monospace;
   --radius-lg: 20px;
@@ -33,11 +36,12 @@ body {
   background-color: var(--bg-body);
   color: var(--text-primary);
   font-family: var(--font-family);
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px;
+  overflow: hidden;
 }
 
 /* --- OVERRIDES --- */
@@ -61,11 +65,13 @@ select {
 /* --- LAYOUT --- */
 .dashboard-container {
   display: grid;
-  grid-template-columns: 3fr 1.25fr;
+  grid-template-columns: 900px 350px;
+  /* Rigidly fixed widths */
   gap: 24px;
-  width: 100%;
-  max-width: 1300px;
+  width: 1274px;
+  /* 900 + 350 + 24 */
   height: 800px;
+  margin: 0 auto;
 }
 
 /* --- MAIN PANEL --- */
@@ -78,20 +84,27 @@ select {
   background-color: var(--bg-panel);
   position: relative;
   overflow: hidden;
+  /* Prevents outer shifting */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  height: 800px;
+  /* Match container */
+  width: 900px;
+  /* Match container */
 }
 
 /* Tabs */
 .tabs {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 2px;
   margin-bottom: 25px;
-  background: var(--bg-body);
+  background: rgba(255, 255, 255, 0.094);
   padding: 4px;
   border-radius: var(--radius-md);
-  width: fit-content;
-  border: 1px solid var(--border-color);
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.094);
+  flex-shrink: 0;
+  /* Header stays fixed */
 }
 
 .tab-btn {
@@ -112,9 +125,10 @@ select {
 
 .tab-btn.active {
   color: var(--text-primary);
-  background-color: var(--bg-input);
+  background-color: var(--bg-panel);
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
+
 .tab-btn:hover:not(.active) {
   color: var(--text-secondary);
 }
@@ -123,9 +137,9 @@ select {
 .tab-content {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
-  height: 100%;
 }
 
 /* Headers & Lists */
@@ -140,12 +154,22 @@ select {
   color: var(--text-primary);
   text-transform: uppercase;
   align-items: center;
+  flex-shrink: 0;
+  /* Header stays fixed */
 }
 
 .list-container {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 10px;
+  scrollbar-gutter: stable;
+  /* Pre-allocates space for scrollbar to prevent shifting */
+}
+
+.list-header>*,
+.list-row>* {
+  min-width: 0;
 }
 
 .list-row {
@@ -157,6 +181,7 @@ select {
   transition: background 0.15s;
   color: var(--text-secondary);
 }
+
 .list-row:hover {
   background-color: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
@@ -169,13 +194,20 @@ select {
   border-radius: 6px;
   border: 1px solid transparent;
   min-height: 24px;
-  display: flex;
-  align-items: center;
+  display: block;
+  /* Changed for ellipsis support */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 24px;
+  /* Matches min-height for centering */
 }
+
 .editable:hover {
   background-color: var(--bg-input);
   border-color: var(--border-color);
 }
+
 .editable:focus {
   outline: none;
   background-color: var(--bg-input);
@@ -183,14 +215,15 @@ select {
   color: var(--text-primary);
   cursor: text;
 }
+
 input.editable-input {
-    width: 100%;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: inherit;
-    font-family: inherit;
-    font-size: inherit;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 /* GRID COLUMNS DEFINITIONS */
@@ -198,14 +231,17 @@ input.editable-input {
   grid-template-columns: 1.5fr 3fr 1.2fr 1.2fr;
   gap: 15px;
 }
+
 .grid-goals {
   grid-template-columns: 3fr 1.5fr 1.5fr;
   gap: 15px;
 }
+
 .grid-reminders {
   grid-template-columns: 2.5fr 1.5fr 1.2fr 1.5fr;
   gap: 15px;
 }
+
 .grid-habits {
   grid-template-columns: 3fr 1.5fr 1.5fr;
   gap: 15px;
@@ -223,7 +259,8 @@ input.editable-input {
 input,
 select {
   background: var(--bg-input);
-  border: 1px solid var(--border-color); /* 50% opacity white */
+  border: 1px solid var(--border-color);
+  /* 50% opacity white */
   color: var(--text-primary);
   font-family: var(--font-family);
   padding: 14px;
@@ -232,9 +269,12 @@ select {
   outline: none;
   transition: border-color 0.2s;
 }
+
 input::placeholder {
-  color: var(--text-secondary); /* 75% opacity */
+  color: var(--text-secondary);
+  /* 75% opacity */
 }
+
 input:focus,
 select:focus {
   border-color: var(--text-primary);
@@ -243,9 +283,11 @@ select:focus {
 .input-text {
   flex-grow: 1;
 }
+
 .input-sm {
   width: 150px;
 }
+
 .input-xs {
   width: 110px;
 }
@@ -262,10 +304,12 @@ select:focus {
   font-size: 1rem;
   transition: transform 0.1s, opacity 0.2s;
 }
+
 .add-btn:hover {
   opacity: 0.9;
   transform: scale(1.02);
 }
+
 .add-btn:active {
   transform: scale(0.98);
 }
@@ -275,7 +319,10 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  height: 100%;
+  height: 800px;
+  /* Rigidly fixed */
+  width: 350px;
+  /* Rigidly fixed */
 }
 
 /* Calendar Widget */
@@ -283,8 +330,10 @@ select:focus {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 20px;
-  background-color: var(--bg-panel); 
-  flex: 0 0 auto;
+  background-color: var(--bg-panel);
+  flex: 0 0 350px;
+  /* Fixed height for calendar */
+  overflow: hidden;
 }
 
 .cal-header {
@@ -302,13 +351,15 @@ select:focus {
   color: var(--text-primary);
   width: 32px;
   height: 32px;
-  border-radius: 8px; /* Square-ish */
+  border-radius: 8px;
+  /* Square-ish */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
 }
+
 .cal-nav-btn:hover {
   background-color: var(--bg-input);
   border-color: var(--text-primary);
@@ -336,6 +387,7 @@ select:focus {
   transition: background 0.1s;
   color: var(--text-secondary);
 }
+
 .cal-day:hover {
   background-color: var(--bg-input);
   color: var(--text-primary);
@@ -379,6 +431,8 @@ select:focus {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 15px;
   margin-bottom: 15px;
+  flex-shrink: 0;
+  /* Header stays fixed */
 }
 
 .section-title {
@@ -398,6 +452,7 @@ select:focus {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .reset-btn:hover {
   color: var(--text-primary);
   border-color: var(--text-primary);
@@ -405,21 +460,27 @@ select:focus {
 
 .upcoming-list {
   overflow-y: auto;
+  overflow-x: hidden;
   flex-grow: 1;
   padding-right: 5px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scrollbar-gutter: stable;
+  /* Stability */
 }
 
 .upcoming-item {
-  border: 1px solid rgba(255,255,255,0.2); /* Sparser border */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* Sparser border */
   border-radius: var(--radius-md);
   padding: 15px;
-  background-color: transparent; /* Clean look */
+  background-color: transparent;
+  /* Clean look */
   transition: transform 0.2s;
   cursor: pointer;
 }
+
 .upcoming-item:hover {
   transform: translateX(4px);
   border-color: var(--text-secondary);
@@ -447,6 +508,7 @@ select:focus {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   min-width: 150px;
 }
+
 .ctx-item {
   padding: 10px 15px;
   cursor: pointer;
@@ -454,6 +516,7 @@ select:focus {
   font-weight: bold;
   border-radius: 4px;
 }
+
 .ctx-item:hover {
   background-color: rgba(239, 68, 68, 0.1);
 }
@@ -462,13 +525,16 @@ select:focus {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-color);
 }
