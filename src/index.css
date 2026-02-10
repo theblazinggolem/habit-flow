@@ -630,7 +630,8 @@ select:focus {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 15px;
-  align-items: baseline;
+  align-items: center;
+  /* Better than baseline for inputs */
 }
 
 .detail-label {
@@ -643,11 +644,15 @@ select:focus {
 
 .detail-value {
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   gap: 10px;
   min-height: 24px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .detail-input {
@@ -659,6 +664,7 @@ select:focus {
   border-radius: 6px;
   font-family: inherit;
   font-size: 0.95rem;
+  box-sizing: border-box;
 }
 
 .detail-input:focus {
@@ -671,7 +677,13 @@ select:focus {
   line-height: 1.6;
   color: var(--text-secondary);
   white-space: pre-wrap;
-  min-height: 20px;
+  height: 100px;
+  overflow-y: auto;
+  padding: 12px;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  background-color: var(--bg-hover);
+  border-radius: 6px;
 }
 
 .detail-notes-input {
@@ -683,8 +695,10 @@ select:focus {
   border-radius: 6px;
   font-family: inherit;
   font-size: 0.95rem;
-  resize: vertical;
-  min-height: 100px;
+  resize: none;
+  height: 100px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .detail-notes-input:focus {

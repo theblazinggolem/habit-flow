@@ -213,9 +213,7 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
     const DetailRow = ({ label, value, isEditing, renderInput }) => (
         <div className="detail-row">
             <span className="detail-label">{label}</span>
-            <div className="detail-value">
-                {isEditing ? renderInput() : value}
-            </div>
+            {isEditing ? renderInput() : <div className="detail-value">{value}</div>}
         </div>
     );
 
