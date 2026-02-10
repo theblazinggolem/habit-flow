@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import MainPanel from './components/MainPanel';
 import CalendarWidget from './components/CalendarWidget';
 import UpcomingWidget from './components/UpcomingWidget';
@@ -82,6 +83,7 @@ function App() {
 
     return (
         <BrowserRouter>
+            <Toaster position="bottom-right" theme="dark" />
             <div className="dashboard-container">
                 <MainPanel
                     data={data}
