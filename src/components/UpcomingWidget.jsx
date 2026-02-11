@@ -1,6 +1,6 @@
 import React from 'react';
 
-const UpcomingWidget = ({ data, filterDate, setFilterDate }) => {
+const UpcomingWidget = ({ data, filterDate, setFilterDate, onItemClick }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -31,20 +31,42 @@ const UpcomingWidget = ({ data, filterDate, setFilterDate }) => {
 
     allItems.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+    const getTypePlural = (type) => {
+        switch (type) {
+            case 'TASK': return 'tasks';
+            case 'GOAL': return 'goals';
+            case 'REMINDER': return 'reminders';
+            case 'HABIT': return 'habits';
+            default: return 'tasks';
+        }
+    };
+
     return (
         <div className="upcoming-widget">
-            <div className="section-header">
-                <span className="section-title" id="upcomingTitle">{titleText}</span>
-                <button className="reset-btn" onClick={() => setFilterDate(null)}>
-                    SHOW ALL
-                </button>
+            <div className="section-header" style={{ justifyContent: filterDate ? 'space-between' : 'center' }}>
+                <span className="section-title" id="upcomingTitle">{titleText.replace(" (7 DAYS)", "")}</span>
+                {filterDate && (
+                    <button
+                        className="reset-btn icon-only"
+                        onClick={() => setFilterDate(null)}
+                        title="Show All"
+                        style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
+                    >
+                        <img src="/assets/vectors/reload.svg" alt="Reload" style={{ width: '16px', height: '16px', display: 'block' }} />
+                    </button>
+                )}
             </div>
             <div className="upcoming-list" id="upcomingList">
                 {allItems.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '20px', color: '#555' }}>No events found</div>
                 ) : (
                     allItems.map((item, idx) => (
-                        <div key={`${item.type}-${item.id}-${idx}`} className="upcoming-item">
+                        <div
+                            key={`${item.type}-${item.id}-${idx}`}
+                            className="upcoming-item"
+                            onClick={() => onItemClick && onItemClick(getTypePlural(item.type), item)}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <div className="up-meta">
                                 <span>{item.type}</span>
                                 <span>{item.date}</span>

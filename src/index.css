@@ -93,16 +93,18 @@ select {
 }
 
 /* Tabs */
+/* Tabs */
 .tabs {
-  display: flex;
-  justify-content: space-between;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
   margin-bottom: 25px;
   background: rgba(255, 255, 255, 0.094);
   padding: 4px;
   border-radius: var(--radius-md);
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.094);
+  /* border: 1px solid rgba(255, 255, 255, 0.094); */
+  border: none;
   flex-shrink: 0;
   /* Header stays fixed */
 }
@@ -115,12 +117,16 @@ select {
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  padding: 10px 24px;
+  padding: 10px 0;
+  /* Adjusted padding since width is fluid */
   border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
   text-decoration: none;
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 .tab-btn.active {
@@ -365,6 +371,8 @@ select:focus {
   border-color: var(--text-primary);
 }
 
+
+
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -394,18 +402,21 @@ select:focus {
 }
 
 /* Today's date (if not selected) */
+/* Today's date (always solid white) */
 .cal-day.today {
-  border: 1px solid var(--text-primary);
-  color: var(--text-primary);
+  background-color: #FFFFFF;
+  color: #000000;
   font-weight: bold;
+  border-radius: 12px;
 }
 
-/* The Selected Filter Date */
-.cal-day.selected {
-  background-color: var(--text-primary);
-  color: var(--bg-body);
+/* The Selected Filter Date (border only for non-today) */
+.cal-day.selected:not(.today) {
+  background-color: transparent;
+  color: var(--text-primary);
   font-weight: bold;
-  border: none;
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+  border-radius: 6px;
 }
 
 .cal-day.empty {
@@ -764,4 +775,155 @@ select:focus {
 
 [data-sonner-toast][data-type='success'] [data-icon] {
   color: var(--text-primary) !important;
+}
+
+/* --- CUSTOM SELECT --- */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+  font-family: var(--font-family);
+}
+
+.custom-select-trigger {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 14px;
+  /* Matches input padding exactly */
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  user-select: none;
+  /* removed min-height to let padding dictate height like inputs */
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--text-primary);
+}
+
+.custom-select-trigger .placeholder {
+  color: var(--text-secondary);
+}
+
+.custom-select-options {
+  position: absolute;
+  left: 0;
+  min-width: 220px;
+  /* Slightly wider base */
+  max-width: 300px;
+  /* Prevent it from getting too wide */
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  z-index: 9999;
+  /* Ensure it's on top of everything */
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.custom-select-options.down {
+  top: 100%;
+  margin-top: 4px;
+}
+
+.custom-select-options.up {
+  bottom: 100%;
+  top: auto;
+  margin-bottom: 4px;
+}
+
+.custom-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 100%;
+}
+
+.custom-option>span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  /* Take available width */
+  margin-right: 8px;
+  /* Spacing from checkbox/icon */
+}
+
+.cs-dropdown-action:hover {
+  background: var(--bg-hover);
+}
+
+.cs-new-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: bold;
+  outline: none;
+  width: 100%;
+  cursor: text;
+}
+
+.cs-new-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.cs-new-input-action {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: bold;
+  outline: none;
+  width: 100%;
+  padding: 12px 14px;
+  cursor: text;
+}
+
+.cs-new-input-action::placeholder {
+  color: var(--text-secondary);
+}
+
+.custom-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.custom-option.selected {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+.custom-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.custom-option-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #FFFFFF;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.custom-option.selected .custom-option-checkbox,
+.custom-option-checkbox.checked {
+  background: #FFFFFF;
+  border-color: #FFFFFF;
 }

@@ -1,0 +1,5 @@
+export const STATUS_OPTS = ["NOT STARTED", "IN PROGRESS", "COMPLETED", "ON HOLD", "CANCELLED"];
+export const TAG_OPTS = ["PROJECTS", "HOMEWORK", "PERSONAL", "WORK"];
+export const PRIORITY_OPTS = ["LOW", "MEDIUM", "HIGH"];
+export const REPEAT_OPTS = ["NONE", "DAILY", "WEEKLY", "BI-WEEKLY", "MONTHLY"];
+export const FREQ_OPTS = ["DAILY", "WEEKLY", "MONTHLY"];

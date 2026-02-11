@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import MainPanel from './components/MainPanel';
 import CalendarWidget from './components/CalendarWidget';
 import UpcomingWidget from './components/UpcomingWidget';
+import ItemDetailModal from './components/ItemDetailModal';
+import INITIAL_TAGS from '../data/tags.json';
 
 const INITIAL_STATE = {
     tasks: [],
@@ -16,6 +18,10 @@ function App() {
     const [data, setData] = useState(INITIAL_STATE);
     const [filterDate, setFilterDate] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    // Global User Tags initialized from JSON
+    const [tags, setTags] = useState(INITIAL_TAGS);
 
     // Fetch data on mount
     React.useEffect(() => {
@@ -31,17 +37,14 @@ function App() {
             })
             .catch(err => {
                 console.error("Failed to load data:", err);
-                // Even if failed, stop loading to show UI (maybe empty)
                 setLoading(false);
             });
     }, []);
 
     // Update specific file
     const saveData = (type, newTypeData) => {
-        // Optimistic UI update
         setData(prev => ({ ...prev, [type]: newTypeData }));
 
-        // Save to server
         fetch(`/api/${type}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,6 +67,33 @@ function App() {
         const newTypeData = data[type].filter(item => item.id !== id);
         saveData(type, newTypeData);
     };
+
+    const handleItemClick = (type, item) => {
+        setSelectedItem({ ...item, type });
+    };
+
+    const handleCloseModal = () => {
+        setSelectedItem(null);
+    };
+
+    // Add new tag handler
+    const handleAddTag = (newTagInput) => {
+        let newTag = newTagInput;
+        if (!newTag || typeof newTag !== 'string') {
+            // Fallback if called without arg
+            newTag = window.prompt("Enter new tag name:");
+        }
+
+        if (newTag) {
+            const normalized = newTag.trim().toUpperCase();
+            if (normalized && !tags.includes(normalized)) {
+                setTags(prev => [...prev, normalized]);
+                toast.success(`Tag "${normalized}" created`);
+            } else if (tags.includes(normalized)) {
+                toast.info("Tag already exists");
+            }
+        }
+    }
 
     if (loading) {
         return (
@@ -90,13 +120,30 @@ function App() {
                     onAdd={handleAdd}
                     onUpdate={handleUpdate}
                     onDelete={handleDelete}
+                    onItemClick={handleItemClick}
                     filterDate={filterDate}
+                    tags={tags}
+                    onAddTag={handleAddTag}
                 />
                 <aside className="sidebar">
                     <CalendarWidget filterDate={filterDate} setFilterDate={setFilterDate} />
-                    <UpcomingWidget data={data} filterDate={filterDate} setFilterDate={setFilterDate} />
+                    <UpcomingWidget
+                        data={data}
+                        filterDate={filterDate}
+                        setFilterDate={setFilterDate}
+                        onItemClick={handleItemClick}
+                    />
                 </aside>
             </div>
+
+            <ItemDetailModal
+                key={selectedItem ? selectedItem.id : 'closed'}
+                selectedItem={selectedItem}
+                onClose={handleCloseModal}
+                onUpdate={handleUpdate}
+                tags={tags}
+                onAddTag={handleAddTag}
+            />
         </BrowserRouter>
     );
 }

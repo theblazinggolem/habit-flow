@@ -1,32 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import Modal from './Modal';
+import { STATUS_OPTS, TAG_OPTS, PRIORITY_OPTS, REPEAT_OPTS, FREQ_OPTS } from '../constants';
+import CustomSelect from './CustomSelect';
 
-const STATUS_OPTS = ["NOT STARTED", "IN PROGRESS", "COMPLETED", "ON HOLD", "CANCELLED"];
-const TAG_OPTS = ["PROJECTS", "HOMEWORK", "PERSONAL", "WORK"];
-const PRIORITY_OPTS = ["LOW", "MEDIUM", "HIGH"];
-const REPEAT_OPTS = ["NONE", "DAILY", "WEEKLY", "BI-WEEKLY", "MONTHLY"];
-const FREQ_OPTS = ["DAILY", "WEEKLY", "MONTHLY"];
-
-const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
+const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], onAddTag }) => {
     // Local state for inputs
     const [inputs, setInputs] = useState({
         text: '',
-        tag: 'PROJECTS',
-        priority: 'MEDIUM',
+        tag: [],
+        priority: '', // Empty to show placeholder
         repeat: 'NONE',
         freq: 'DAILY',
         time: '09:00',
         date: filterDate || new Date().toISOString().split('T')[0]
     });
 
-    // Modal State
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({});
-
-    // Update date if filterDate changes from outside (optional sync)
+    // Update date if filterDate changes from outside
     useEffect(() => {
         if (filterDate) {
             setInputs(prev => ({ ...prev, date: filterDate }));
@@ -46,9 +36,10 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
 
         if (type === 'tasks') {
             newItem.status = "NOT STARTED";
-            newItem.tag = inputs.tag;
+            // Use array directly from inputs.tag or default
+            newItem.tag = (inputs.tag && inputs.tag.length > 0) ? inputs.tag : ["PROJECTS"];
         } else if (type === 'goals') {
-            newItem.priority = inputs.priority;
+            newItem.priority = inputs.priority || "MEDIUM";
         } else if (type === 'reminders') {
             newItem.time = inputs.time;
             newItem.repeat = inputs.repeat;
@@ -59,20 +50,34 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
 
         onAdd(type, newItem);
         toast.success("New item added successfully");
-        setInputs(prev => ({ ...prev, text: '' })); // Clear text only
+        setInputs(prev => ({ ...prev, text: '', tag: [], priority: '' }));
     };
+
+    const panelRef = useRef(null);
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState(null);
 
     const handleContextMenu = (e, type, id) => {
         e.preventDefault();
-        setContextMenu({
-            x: e.pageX,
-            y: e.pageY,
-            type,
-            id
-        });
+
+        if (!panelRef.current) return;
+
+        const rect = panelRef.current.getBoundingClientRect();
+
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+
+        const MENU_WIDTH = 150;
+        const MENU_HEIGHT = 80;
+
+        const containerWidth = rect.width;
+        const containerHeight = rect.height;
+
+        if (x + MENU_WIDTH > containerWidth) x = containerWidth - MENU_WIDTH - 10;
+        if (y + MENU_HEIGHT > containerHeight) y = containerHeight - MENU_HEIGHT - 10;
+
+        setContextMenu({ x, y, type, id });
     };
 
     const closeContextMenu = () => setContextMenu(null);
@@ -87,43 +92,16 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
 
     useEffect(() => {
         const handleClick = () => closeContextMenu();
+        const handleResize = () => closeContextMenu();
+
         document.addEventListener('click', handleClick);
-        return () => document.removeEventListener('click', handleClick);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            document.removeEventListener('click', handleClick);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
-
-    // Modal Logic
-    const openModal = (type, item) => {
-        setSelectedItem({ type, ...item });
-        setEditForm({ ...item, notes: item.notes || '' });
-        setIsEditing(false); // Default to view mode
-    };
-
-    const closeModal = () => {
-        setSelectedItem(null);
-        setEditForm({});
-        setIsEditing(false);
-    };
-
-    const handleEditChange = (field, value) => {
-        setEditForm(prev => ({ ...prev, [field]: value }));
-    };
-
-    const saveChanges = () => {
-        if (!selectedItem) return;
-        const type = selectedItem.type;
-
-        // Loop over keys in editForm and call onUpdate if changed or new (like notes)
-        // We also want to ensure notes are saved even if other things aren't
-        Object.keys(editForm).forEach(key => {
-            if (editForm[key] !== selectedItem[key]) {
-                onUpdate(type, selectedItem.id, key, editForm[key]);
-            }
-        });
-
-        toast.success("Changes saved successfully");
-        closeModal();
-    };
-
 
     // Generic List Renderer
     const renderList = (type, items, columns, renderRow) => (
@@ -137,7 +115,7 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
                         key={item.id}
                         className={`list-row grid-${type}`}
                         onContextMenu={(e) => handleContextMenu(e, type, item.id)}
-                        onClick={() => openModal(type, item)}
+                        onClick={() => onItemClick(type, item)}
                         style={{ cursor: 'pointer' }}
                     >
                         {renderRow(item)}
@@ -163,15 +141,30 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
                 />
 
                 {type === 'tasks' && (
-                    <select className="input-sm" value={inputs.tag} onChange={(e) => handleChange('tag', e.target.value)}>
-                        {TAG_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
+                    <div style={{ width: '200px' }}>
+                        <CustomSelect
+                            options={tags}
+                            value={inputs.tag}
+                            onChange={(val) => handleChange('tag', val)}
+                            placeholder="TAGS"
+                            multiple={true}
+                            direction="up"
+                            onAddNew={onAddTag}
+                        />
+                    </div>
                 )}
 
                 {type === 'goals' && (
-                    <select className="input-sm" value={inputs.priority} onChange={(e) => handleChange('priority', e.target.value)}>
-                        {PRIORITY_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                    </select>
+                    <div style={{ width: '150px' }}>
+                        <CustomSelect
+                            options={PRIORITY_OPTS}
+                            value={inputs.priority}
+                            onChange={(val) => handleChange('priority', val)}
+                            placeholder="PRIORITY"
+                            multiple={false}
+                            direction="up"
+                        />
+                    </div>
                 )}
 
                 {type === 'reminders' && (
@@ -205,20 +198,18 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
         );
     };
 
-    const Cell = ({ value }) => (
-        <span className="editable" style={{ pointerEvents: 'none' }}>{value}</span>
-    );
-
-    // Helpers for rendering detail rows
-    const DetailRow = ({ label, value, isEditing, renderInput }) => (
-        <div className="detail-row">
-            <span className="detail-label">{label}</span>
-            {isEditing ? renderInput() : <div className="detail-value">{value}</div>}
-        </div>
-    );
+    const Cell = ({ value }) => {
+        let displayValue = value;
+        if (Array.isArray(value)) {
+            displayValue = value.join(', ');
+        }
+        return (
+            <span className="editable" style={{ pointerEvents: 'none' }}>{displayValue}</span>
+        );
+    };
 
     return (
-        <main className="main-panel">
+        <main className="main-panel" ref={panelRef}>
             <nav className="tabs">
                 <NavLink to="/tasks" className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>TASKS</NavLink>
                 <NavLink to="/goals" className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>GOALS</NavLink>
@@ -273,150 +264,8 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, filterDate }) => {
                     <div className="ctx-item" onClick={handleDelete}>Delete Item</div>
                 </div>
             )}
-
-            <Modal
-                isOpen={!!selectedItem}
-                onClose={closeModal}
-                title={`${selectedItem ? selectedItem.type.slice(0, -1).toUpperCase() : ''} DETAILS`}
-            >
-                {selectedItem && (
-                    <>
-                        <div className="modal-header-actions" style={{ position: 'absolute', top: '40px', right: '40px', marginRight: '40px' }}>
-                            {isEditing ? (
-                                <button className="btn-save" onClick={saveChanges}>SAVE CHANGES</button>
-                            ) : (
-                                <button className="btn-edit-toggle" onClick={() => setIsEditing(true)}>EDIT</button>
-                            )}
-                        </div>
-
-                        <DetailRow
-                            label={selectedItem.type.slice(0, -1).toUpperCase()}
-                            value={editForm.text}
-                            isEditing={isEditing}
-                            renderInput={() => (
-                                <input
-                                    className="detail-input"
-                                    type="text"
-                                    value={editForm.text || ''}
-                                    onChange={(e) => handleEditChange('text', e.target.value)}
-                                />
-                            )}
-                        />
-
-                        {selectedItem.type === 'tasks' && (
-                            <>
-                                <DetailRow
-                                    label="STATUS"
-                                    value={editForm.status}
-                                    isEditing={isEditing}
-                                    renderInput={() => (
-                                        <select className="detail-input" value={editForm.status} onChange={(e) => handleEditChange('status', e.target.value)}>
-                                            {STATUS_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                    )}
-                                />
-                                <DetailRow
-                                    label="TAGS"
-                                    value={editForm.tag}
-                                    isEditing={isEditing}
-                                    renderInput={() => (
-                                        <select className="detail-input" value={editForm.tag} onChange={(e) => handleEditChange('tag', e.target.value)}>
-                                            {TAG_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                    )}
-                                />
-                            </>
-                        )}
-
-                        {selectedItem.type === 'goals' && (
-                            <DetailRow
-                                label="PRIORITY"
-                                value={editForm.priority}
-                                isEditing={isEditing}
-                                renderInput={() => (
-                                    <select className="detail-input" value={editForm.priority} onChange={(e) => handleEditChange('priority', e.target.value)}>
-                                        {PRIORITY_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                                    </select>
-                                )}
-                            />
-                        )}
-
-                        {selectedItem.type === 'reminders' && (
-                            <>
-                                <DetailRow
-                                    label="TIME"
-                                    value={editForm.time}
-                                    isEditing={isEditing}
-                                    renderInput={() => (
-                                        <input
-                                            className="detail-input"
-                                            type="time"
-                                            value={editForm.time || ''}
-                                            onChange={(e) => handleEditChange('time', e.target.value)}
-                                        />
-                                    )}
-                                />
-                                <DetailRow
-                                    label="REPEAT"
-                                    value={editForm.repeat}
-                                    isEditing={isEditing}
-                                    renderInput={() => (
-                                        <select className="detail-input" value={editForm.repeat} onChange={(e) => handleEditChange('repeat', e.target.value)}>
-                                            {REPEAT_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                                        </select>
-                                    )}
-                                />
-                            </>
-                        )}
-
-                        {selectedItem.type === 'habits' && (
-                            <DetailRow
-                                label="FREQUENCY"
-                                value={editForm.frequency}
-                                isEditing={isEditing}
-                                renderInput={() => (
-                                    <select className="detail-input" value={editForm.frequency} onChange={(e) => handleEditChange('frequency', e.target.value)}>
-                                        {FREQ_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
-                                    </select>
-                                )}
-                            />
-                        )}
-
-                        <DetailRow
-                            label="DATE"
-                            value={editForm.date}
-                            isEditing={isEditing}
-                            renderInput={() => (
-                                <input
-                                    className="detail-input"
-                                    type="date"
-                                    value={editForm.date || ''}
-                                    onChange={(e) => handleEditChange('date', e.target.value)}
-                                />
-                            )}
-                        />
-
-                        <div style={{ marginTop: '10px' }}>
-                            <span className="detail-label">NOTES</span>
-                            {isEditing ? (
-                                <textarea
-                                    className="detail-notes-input"
-                                    placeholder="Add notes..."
-                                    value={editForm.notes || ''}
-                                    onChange={(e) => handleEditChange('notes', e.target.value)}
-                                />
-                            ) : (
-                                <div className="detail-notes">
-                                    {editForm.notes || "No notes"}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-            </Modal>
         </main>
     );
 };
 
 export default MainPanel;
-
