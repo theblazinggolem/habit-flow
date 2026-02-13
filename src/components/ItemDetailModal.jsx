@@ -165,10 +165,13 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
     }, [editForm, selectedItem]);
 
     const handleMainAction = () => {
+        if (hasChanges) {
+            saveChanges();
+            return;
+        }
+
         if (!isEditing) {
             setIsEditing(true);
-        } else if (hasChanges) {
-            saveChanges();
         } else {
             // Cancel mode
             setIsEditing(false);
@@ -184,8 +187,8 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
     };
 
     const getButtonText = () => {
-        if (!isEditing) return "EDIT";
         if (hasChanges) return "SAVE CHANGES";
+        if (!isEditing) return "EDIT";
         return "CANCEL";
     };
 
@@ -233,8 +236,8 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
                             </select>
                         )}
                     />
-                    <div className="detail-row">
-                        <span className="detail-label">TAGS</span>
+                    <div className="detail-row" style={{ alignItems: 'flex-start' }}>
+                        <span className="detail-label" style={{ marginTop: '8px' }}>TAGS</span>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                             {editForm.tag && editForm.tag.map((tag, idx) => (
                                 <div key={idx} className="tag-chip" style={{
@@ -296,22 +299,19 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
             )}
 
             {itemType === 'goals' && (
-                <DetailRow
-                    fieldName="priority"
-                    label="PRIORITY"
-                    value={editForm.priority}
-                    renderInput={() => (
-                        <div style={{ width: '200px' }}>
-                            <CustomSelect
-                                options={PRIORITY_OPTS}
-                                value={editForm.priority}
-                                onChange={(val) => handleEditChange('priority', val)}
-                                placeholder="PRIORITY"
-                                multiple={false}
-                            />
-                        </div>
-                    )}
-                />
+                <div className="detail-row">
+                    <span className="detail-label">PRIORITY</span>
+                    <div style={{ width: '200px' }}>
+                        <CustomSelect
+                            options={PRIORITY_OPTS}
+                            value={editForm.priority}
+                            onChange={(val) => handleEditChange('priority', val)}
+                            placeholder="PRIORITY"
+                            multiple={false}
+                            minimal={true}
+                        />
+                    </div>
+                </div>
             )}
 
             {itemType === 'reminders' && (
@@ -372,14 +372,22 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
                 fieldName="date"
                 label="DATE"
                 value={editForm.date}
+                customDisplay={
+                    <span style={{ fontWeight: 'inherit', color: 'inherit', minWidth: '200px' }}>
+                        {editForm.date}
+                    </span>
+                }
                 renderInput={() => (
-                    <input
-                        className="detail-input"
-                        type="date"
-                        value={editForm.date || ''}
-                        onChange={(e) => handleEditChange('date', e.target.value)}
-                        autoFocus
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', width: '200px' }}>
+                        <input
+                            className="detail-input"
+                            type="text"
+                            value={editForm.date || ''}
+                            onChange={(e) => handleEditChange('date', e.target.value)}
+                            autoFocus
+                            placeholder="YYYY-MM-DD"
+                        />
+                    </div>
                 )}
             />
 

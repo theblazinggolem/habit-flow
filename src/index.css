@@ -76,7 +76,7 @@ select {
 
 /* --- MAIN PANEL --- */
 .main-panel {
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: var(--radius-lg);
   padding: 30px;
   display: flex;
@@ -168,9 +168,8 @@ select {
   flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 10px;
-  scrollbar-gutter: stable;
-  /* Pre-allocates space for scrollbar to prevent shifting */
+  padding-right: 2px;
+  /* Removed scrollbar-gutter */
 }
 
 .list-header>*,
@@ -190,6 +189,11 @@ select {
 
 .list-row:hover {
   background-color: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+}
+
+.list-row.selected {
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
@@ -234,7 +238,7 @@ input.editable-input {
 
 /* GRID COLUMNS DEFINITIONS */
 .grid-tasks {
-  grid-template-columns: 1.5fr 3fr 1.2fr 1.2fr;
+  grid-template-columns: 1.5fr 4fr 1.2fr;
   gap: 15px;
 }
 
@@ -264,9 +268,9 @@ input.editable-input {
 
 input,
 select {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  /* 50% opacity white */
+  background: var(--bg-hover);
+  border: none;
+  /* Remove border */
   color: var(--text-primary);
   font-family: var(--font-family);
   padding: 14px;
@@ -284,6 +288,23 @@ input::placeholder {
 input:focus,
 select:focus {
   border-color: var(--text-primary);
+}
+
+/* Custom Calendar Icon for Date Inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background-image: url('/assets/vectors/calendar.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 .input-text {
@@ -333,7 +354,7 @@ select:focus {
 
 /* Calendar Widget */
 .calendar-widget {
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: var(--radius-lg);
   padding: 20px;
   background-color: var(--bg-panel);
@@ -353,7 +374,7 @@ select:focus {
 
 .cal-nav-btn {
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: none;
   color: var(--text-primary);
   width: 32px;
   height: 32px;
@@ -425,7 +446,7 @@ select:focus {
 
 /* Upcoming Widget */
 .upcoming-widget {
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: var(--radius-lg);
   padding: 20px;
   background-color: var(--bg-panel);
@@ -477,24 +498,21 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  scrollbar-gutter: stable;
-  /* Stability */
+  /* Removed scrollbar-gutter */
 }
 
 .upcoming-item {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  /* Sparser border */
+  border: none;
   border-radius: var(--radius-md);
   padding: 15px;
-  background-color: transparent;
-  /* Clean look */
-  transition: transform 0.2s;
+  background-color: var(--bg-hover);
+  transition: transform 0.2s, background-color 0.2s;
   cursor: pointer;
 }
 
 .upcoming-item:hover {
   transform: translateX(4px);
-  border-color: var(--text-secondary);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .up-meta {
@@ -512,7 +530,7 @@ select:focus {
 .context-menu {
   position: absolute;
   background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
+  border: none;
   padding: 5px;
   border-radius: var(--radius-sm);
   z-index: 100;
@@ -534,7 +552,7 @@ select:focus {
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 2px;
 }
 
 ::-webkit-scrollbar-track {
@@ -542,12 +560,12 @@ select:focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-hover);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-color);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* --- MODAL --- */
@@ -575,7 +593,7 @@ select:focus {
 
 .modal-content {
   background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: 24px;
   padding: 40px;
   width: 500px;
@@ -659,23 +677,29 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 24px;
+  min-height: 38px;
+  /* Fixed height for consistency */
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: 6px;
   box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.2;
 }
 
 .detail-input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  border: none;
   color: var(--text-primary);
   padding: 8px 12px;
   border-radius: 6px;
   font-family: inherit;
   font-size: 0.95rem;
   box-sizing: border-box;
+  height: 38px;
+  /* Match detail-value exactly */
+  line-height: 1.2;
 }
 
 .detail-input:focus {
@@ -684,8 +708,7 @@ select:focus {
 }
 
 .detail-notes {
-  margin-top: 10px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-secondary);
   white-space: pre-wrap;
   height: 100px;
@@ -695,12 +718,14 @@ select:focus {
   box-sizing: border-box;
   background-color: var(--bg-hover);
   border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 
 .detail-notes-input {
   width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  border: none;
   color: var(--text-primary);
   padding: 12px;
   border-radius: 6px;
@@ -710,10 +735,11 @@ select:focus {
   height: 100px;
   overflow-y: auto;
   box-sizing: border-box;
+  line-height: 1.5;
 }
 
 .detail-notes-input:focus {
-  border-color: var(--text-primary);
+  border: none;
   outline: none;
 }
 
@@ -785,8 +811,8 @@ select:focus {
 }
 
 .custom-select-trigger {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  border: none;
   color: var(--text-primary);
   padding: 14px;
   /* Matches input padding exactly */
@@ -800,31 +826,62 @@ select:focus {
   /* removed min-height to let padding dictate height like inputs */
 }
 
-.custom-select-trigger:hover {
-  border-color: var(--text-primary);
+/* Minimal Variant */
+.custom-select-trigger.minimal {
+  background: transparent;
+  padding: 0;
+  justify-content: flex-start;
+  gap: 8px;
+  width: auto;
+  border-radius: 0;
+}
+
+.custom-select-trigger.minimal:hover {
+  background: transparent;
+  opacity: 0.8;
+}
+
+.custom-select-trigger:not(.minimal):hover {
+  /* background-color: var(--bg-hover-strong); REMOVED */
+  color: var(--text-primary);
 }
 
 .custom-select-trigger .placeholder {
   color: var(--text-secondary);
 }
 
+/* Specific alignment for minimal Priority selector in Modal */
+.modal-content .custom-select-trigger.minimal span {
+  margin-left: 12px;
+}
+
 .custom-select-options {
   position: absolute;
   left: 0;
   min-width: 220px;
-  /* Slightly wider base */
   max-width: 300px;
-  /* Prevent it from getting too wide */
   background: var(--bg-panel);
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: var(--radius-md);
   z-index: 9999;
-  /* Ensure it's on top of everything */
-  max-height: 250px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  /* Contains the scroll area */
+}
+
+.custom-select-scroll-area {
+  flex-grow: 1;
+  max-height: 200px;
   overflow-y: auto;
-  overflow-x: hidden;
-  /* Prevent horizontal scroll */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 4px 0;
+}
+
+.cs-footer-action {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .custom-select-options.down {

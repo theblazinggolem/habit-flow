@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
@@ -7,8 +8,8 @@ const MONTH_NAMES = [
 
 const CalendarWidget = ({ filterDate, setFilterDate }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
-
-    const [isChoosingDate, setIsChoosingDate] = useState(false);
+    const [isEditingHeader, setIsEditingHeader] = useState(false);
+    const [headerInputValue, setHeaderInputValue] = useState("");
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -20,16 +21,82 @@ const CalendarWidget = ({ filterDate, setFilterDate }) => {
     };
 
     const handleDateHeaderClick = () => {
-        setIsChoosingDate(true);
+        setHeaderInputValue(`${MONTH_NAMES[month]} ${year}`);
+        setIsEditingHeader(true);
     };
 
-    const handleDateInputChange = (e) => {
-        const val = e.target.value;
-        if (val) {
-            const [y, m] = val.split('-');
-            const newDate = new Date(parseInt(y), parseInt(m) - 1, 1);
-            setCurrentDate(newDate);
-            setIsChoosingDate(false);
+    const handleHeaderSubmit = (e) => {
+        if (e.key === 'Enter') {
+            const input = headerInputValue.trim();
+            if (!input) {
+                setIsEditingHeader(false);
+                return;
+            }
+
+            // Try to parse the input
+            let targetDate = null;
+            let targetDay = null;
+
+            // Normalize separators to slashes
+            const normalizedInput = input.replace(/[-.]/g, '/');
+            const parts = normalizedInput.split('/');
+
+            // 1. Try DD/MM/YYYY or D/M/YYYY
+            if (parts.length === 3) {
+                const d = parseInt(parts[0]);
+                const m = parseInt(parts[1]) - 1;
+                const y = parseInt(parts[2]);
+                if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+                    targetDate = new Date(y, m, 1);
+                    targetDay = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+                }
+            }
+            // 2. Try MM/YYYY or M/YYYY
+            else if (parts.length === 2) {
+                const m = parseInt(parts[0]) - 1;
+                const y = parseInt(parts[1]);
+                if (!isNaN(m) && !isNaN(y)) targetDate = new Date(y, m, 1);
+            }
+
+            // 3. Try "Month Year"
+            if (!targetDate) {
+                const searchStr = input.replace(',', '');
+                const words = searchStr.split(/\s+/);
+                if (words.length === 2) {
+                    const mIdx = MONTH_NAMES.findIndex(name =>
+                        name.toLowerCase().startsWith(words[0].toLowerCase())
+                    );
+                    const y = parseInt(words[1]);
+                    if (mIdx !== -1 && !isNaN(y)) targetDate = new Date(y, mIdx, 1);
+                }
+            }
+
+            // 4. Try "Day Month Year" (e.g., 8 March 2025)
+            if (!targetDate) {
+                const searchStr = input.replace(',', '');
+                const words = searchStr.split(/\s+/);
+                if (words.length === 3) {
+                    const d = parseInt(words[0]);
+                    const mIdx = MONTH_NAMES.findIndex(name =>
+                        name.toLowerCase().startsWith(words[1].toLowerCase())
+                    );
+                    const y = parseInt(words[2]);
+                    if (!isNaN(d) && mIdx !== -1 && !isNaN(y)) {
+                        targetDate = new Date(y, mIdx, 1);
+                        targetDay = `${y}-${(mIdx + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+                    }
+                }
+            }
+
+            if (targetDate && !isNaN(targetDate.getTime())) {
+                setCurrentDate(targetDate);
+                if (targetDay) setFilterDate(targetDay);
+                setIsEditingHeader(false);
+            } else {
+                toast.error("Format: 'July 2026', '10/02/2026', or '8 March 2025'");
+            }
+        } else if (e.key === 'Escape') {
+            setIsEditingHeader(false);
         }
     };
 
@@ -81,35 +148,63 @@ const CalendarWidget = ({ filterDate, setFilterDate }) => {
                 <button className="cal-nav-btn" onClick={() => changeMonth(-1)}>
                     &lt;
                 </button>
-                {isChoosingDate ? (
-                    <input
-                        type="month"
-                        className="cal-date-input"
-                        value={`${year}-${(month + 1).toString().padStart(2, '0')}`}
-                        onChange={handleDateInputChange}
-                        onBlur={() => setIsChoosingDate(false)}
-                        autoFocus
+                <div
+                    className="cal-header-jump"
+                    onClick={!isEditingHeader ? handleDateHeaderClick : undefined}
+                    style={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: isEditingHeader ? 'var(--bg-input)' : 'transparent',
+                        border: 'none',
+                        padding: '4px 12px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        width: '200px',
+                        height: '36px',
+                        justifyContent: 'center'
+                    }}
+                >
+                    {isEditingHeader ? (
+                        <input
+                            type="text"
+                            value={headerInputValue}
+                            onChange={(e) => setHeaderInputValue(e.target.value)}
+                            onKeyDown={handleHeaderSubmit}
+                            onBlur={() => setIsEditingHeader(false)}
+                            autoFocus
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'white',
+                                fontFamily: 'inherit',
+                                fontSize: '1rem',
+                                fontWeight: 'bold',
+                                textAlign: 'center',
+                                outline: 'none',
+                                width: '100%',
+                                paddingRight: '24px' // Leave space for icon
+                            }}
+                        />
+                    ) : (
+                        <span style={{ userSelect: 'none', fontWeight: 'bold', paddingRight: '24px' }}>
+                            {MONTH_NAMES[month]} {year}
+                        </span>
+                    )}
+                    <img
+                        src="/assets/vectors/calendar.svg"
+                        alt="calendar"
                         style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'white',
-                            fontFamily: 'inherit',
-                            fontSize: '1rem',
-                            textAlign: 'center',
-                            width: '140px',
-                            cursor: 'pointer'
+                            position: 'absolute',
+                            right: '12px',
+                            width: '14px',
+                            height: '14px',
+                            opacity: 0.8
                         }}
                     />
-                ) : (
-                    <span
-                        id="calMonthYear"
-                        onClick={handleDateHeaderClick}
-                        style={{ cursor: 'pointer', userSelect: 'none' }}
-                        title="Click to jump to date"
-                    >
-                        {MONTH_NAMES[month]} {year}
-                    </span>
-                )}
+                </div>
                 <button className="cal-nav-btn" onClick={() => changeMonth(1)}>
                     &gt;
                 </button>
@@ -148,7 +243,7 @@ const CalendarWidget = ({ filterDate, setFilterDate }) => {
                     );
                 })}
             </div>
-        </div>
+        </div >
     );
 };
 

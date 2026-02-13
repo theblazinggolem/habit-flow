@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Routes, Route, Navigate } from 'react-router-dom';
+import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { STATUS_OPTS, TAG_OPTS, PRIORITY_OPTS, REPEAT_OPTS, FREQ_OPTS } from '../constants';
 import CustomSelect from './CustomSelect';
 
-const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], onAddTag }) => {
+const MainPanel = ({ data, onAdd, onDelete, onDeleteMultiple, onItemClick, filterDate, tags = [], onAddTag }) => {
+    const [selectedIds, setSelectedIds] = useState([]);
     // Local state for inputs
     const [inputs, setInputs] = useState({
         text: '',
@@ -84,24 +85,89 @@ const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], 
 
     const handleDelete = () => {
         if (contextMenu) {
-            onDelete(contextMenu.type, contextMenu.id);
-            toast.success("Item deleted");
+            if (selectedIds.length > 1 && selectedIds.includes(contextMenu.id)) {
+                onDeleteMultiple(contextMenu.type, selectedIds);
+                toast.success(`${selectedIds.length} items deleted`);
+                setSelectedIds([]);
+            } else {
+                onDelete(contextMenu.type, contextMenu.id);
+                toast.success("Item deleted");
+                setSelectedIds(prev => prev.filter(id => id !== contextMenu.id));
+            }
             closeContextMenu();
         }
     };
 
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Check for Cmd (Mac) or Ctrl (Windows)
+            const isModKey = e.metaKey || e.ctrlKey;
+
+            if (isModKey) {
+                switch (e.key) {
+                    case '1':
+                        e.preventDefault();
+                        navigate('/tasks');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        navigate('/goals');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        navigate('/reminders');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        navigate('/habits');
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [navigate]);
+
     useEffect(() => {
         const handleClick = () => closeContextMenu();
         const handleResize = () => closeContextMenu();
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setSelectedIds([]);
+            }
+        };
 
         document.addEventListener('click', handleClick);
         window.addEventListener('resize', handleResize);
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             document.removeEventListener('click', handleClick);
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, []);
+
+    const handleRowClick = (e, type, item) => {
+        const isModKey = e.metaKey || e.ctrlKey;
+
+        if (isModKey) {
+            e.stopPropagation();
+            setSelectedIds(prev =>
+                prev.includes(item.id)
+                    ? prev.filter(id => id !== item.id)
+                    : [...prev, item.id]
+            );
+        } else {
+            setSelectedIds([item.id]);
+            onItemClick(type, item);
+        }
+    };
 
     // Generic List Renderer
     const renderList = (type, items, columns, renderRow) => (
@@ -113,9 +179,12 @@ const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], 
                 {items.map((item) => (
                     <div
                         key={item.id}
-                        className={`list-row grid-${type}`}
-                        onContextMenu={(e) => handleContextMenu(e, type, item.id)}
-                        onClick={() => onItemClick(type, item)}
+                        className={`list-row grid-${type}${selectedIds.includes(item.id) ? ' selected' : ''}`}
+                        onContextMenu={(e) => {
+                            if (!selectedIds.includes(item.id)) setSelectedIds([item.id]);
+                            handleContextMenu(e, type, item.id);
+                        }}
+                        onClick={(e) => handleRowClick(e, type, item)}
                         style={{ cursor: 'pointer' }}
                     >
                         {renderRow(item)}
@@ -139,7 +208,6 @@ const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], 
                     onChange={(e) => handleChange('text', e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAdd(type)}
                 />
-
                 {type === 'tasks' && (
                     <div style={{ width: '200px' }}>
                         <CustomSelect
@@ -220,11 +288,10 @@ const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], 
             <Routes>
                 <Route path="/" element={<Navigate to="/tasks" replace />} />
 
-                <Route path="/tasks" element={renderList('tasks', data.tasks, ['STATUS', 'TASK', 'TAG', 'DATE'], (item) => (
+                <Route path="/tasks" element={renderList('tasks', data.tasks, ['STATUS', 'TASK', 'DATE'], (item) => (
                     <>
                         <Cell value={item.status} />
                         <Cell value={item.text} />
-                        <Cell value={item.tag} />
                         <Cell value={item.date} />
                     </>
                 ))} />
@@ -261,7 +328,12 @@ const MainPanel = ({ data, onAdd, onDelete, onItemClick, filterDate, tags = [], 
                     style={{ top: contextMenu.y, left: contextMenu.x }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="ctx-item" onClick={handleDelete}>Delete Item</div>
+                    <div className="ctx-item" onClick={handleDelete}>
+                        {selectedIds.length > 1 && selectedIds.includes(contextMenu.id)
+                            ? `Delete Selected (${selectedIds.length})`
+                            : 'Delete Item'
+                        }
+                    </div>
                 </div>
             )}
         </main>

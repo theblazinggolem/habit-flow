@@ -68,6 +68,11 @@ function App() {
         saveData(type, newTypeData);
     };
 
+    const handleDeleteMultiple = (type, ids) => {
+        const newTypeData = data[type].filter(item => !ids.includes(item.id));
+        saveData(type, newTypeData);
+    };
+
     const handleItemClick = (type, item) => {
         setSelectedItem({ ...item, type });
     };
@@ -120,6 +125,7 @@ function App() {
                     onAdd={handleAdd}
                     onUpdate={handleUpdate}
                     onDelete={handleDelete}
+                    onDeleteMultiple={handleDeleteMultiple}
                     onItemClick={handleItemClick}
                     filterDate={filterDate}
                     tags={tags}

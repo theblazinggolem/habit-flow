@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = false, direction = 'down', onAddNew, customTrigger }) => {
+const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = false, direction = 'down', onAddNew, customTrigger, minimal = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [positionStyle, setPositionStyle] = useState({});
@@ -22,9 +22,11 @@ const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = f
             }
         };
 
-        const handleScroll = () => {
-            // Optional: Close on scroll to avoid detached floating menu
-            if (isOpen) setIsOpen(false);
+        const handleScroll = (e) => {
+            // Only close if scrolling something OUTSIDE the menu
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
         };
 
         document.addEventListener('mousedown', handleInteraction);
@@ -156,45 +158,11 @@ const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = f
             ref={dropdownRef}
         >
             {isOptionsEmpty ? (
-                <div className="custom-select-empty" style={{ padding: '12px' }}>
-                    <span className="cs-empty-label">NO {placeholder || 'ITEMS'}</span>
-                    <div className="cs-divider"></div>
-                    {onAddNew && (
-                        <div
-                            className="cs-add-btn"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsAddingNew(true);
-                            }}
-                            style={{
-                                padding: '4px 8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                                minHeight: '28px'
-                            }}
-                        >
-                            {isAddingNew ? (
-                                <input
-                                    type="text"
-                                    placeholder={`NEW ${placeholder ? placeholder.slice(0, -1) : 'ITEM'}`}
-                                    className="cs-new-input"
-                                    onKeyDown={handleNewTagSubmit}
-                                    autoFocus
-                                    onBlur={() => setIsAddingNew(false)}
-                                    // prevent closing when clicking input
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ) : (
-                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
-                                    + NEW {placeholder ? placeholder.slice(0, -1) : 'ITEM'}
-                                </span>
-                            )}
-                        </div>
-                    )}
+                <div className="custom-select-empty" style={{ padding: '12px', textAlign: 'center' }}>
+                    <span className="cs-empty-label" style={{ opacity: 0.5, fontSize: '0.8rem' }}>NO {placeholder || 'ITEMS'}</span>
                 </div>
             ) : (
-                <>
+                <div className="custom-select-scroll-area">
                     {options.map(opt => {
                         const active = isSelected(opt);
                         return (
@@ -221,34 +189,35 @@ const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = f
                             </div>
                         );
                     })}
-                    {onAddNew && (
-                        <div
-                            className="cs-dropdown-action"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsAddingNew(true);
-                            }}
-                            style={{ padding: '0' }}
-                        >
-                            {isAddingNew ? (
-                                <input
-                                    type="text"
-                                    placeholder={`NEW ${placeholder ? placeholder.slice(0, -1) : 'TAG'}`}
-                                    className="cs-new-input-action"
-                                    onKeyDown={handleNewTagSubmit}
-                                    autoFocus
-                                    onBlur={() => setIsAddingNew(false)}
-                                    // prevent closing when clicking input
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ) : (
-                                <div style={{ padding: '12px 14px', width: '100%', cursor: 'pointer' }}>
-                                    <span>+ NEW {placeholder ? placeholder.slice(0, -1) : 'TAG'}</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </>
+                </div>
+            )}
+
+            {onAddNew && (
+                <div className="cs-footer-action">
+                    <div
+                        className="cs-dropdown-action"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsAddingNew(true);
+                        }}
+                    >
+                        {isAddingNew ? (
+                            <input
+                                type="text"
+                                placeholder={`NEW ${placeholder ? placeholder.slice(0, -1) : 'TAG'}`}
+                                className="cs-new-input-action"
+                                onKeyDown={handleNewTagSubmit}
+                                autoFocus
+                                onBlur={() => setIsAddingNew(false)}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <div style={{ padding: '12px 14px', width: '100%', cursor: 'pointer' }}>
+                                <span>+ NEW {placeholder ? placeholder.slice(0, -1) : 'TAG'}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -257,12 +226,12 @@ const CustomSelect = ({ options = [], value, onChange, placeholder, multiple = f
         <div className="custom-select-container" ref={containerRef} style={{ position: 'relative' }}>
             <div className="custom-select-trigger-wrapper" onClick={() => setIsOpen(!isOpen)}>
                 {customTrigger ? customTrigger : (
-                    <div className="custom-select-trigger">
+                    <div className={`custom-select-trigger${minimal ? ' minimal' : ''}`}>
                         <span style={{
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            maxWidth: '90%'
+                            maxWidth: '90%',
                         }}>{displayValue()}</span>
 
                         <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{
