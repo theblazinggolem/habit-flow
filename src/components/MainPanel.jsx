@@ -3,8 +3,9 @@ import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner';
 import { STATUS_OPTS, TAG_OPTS, PRIORITY_OPTS, REPEAT_OPTS, FREQ_OPTS } from '../constants';
 import CustomSelect from './CustomSelect';
+import HabitsTab from './HabitsTab';
 
-const MainPanel = ({ data, onAdd, onDelete, onDeleteMultiple, onItemClick, filterDate, tags = [], onAddTag }) => {
+const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemClick, filterDate, tags = [], onAddTag }) => {
     const [selectedIds, setSelectedIds] = useState([]);
     // Local state for inputs
     const [inputs, setInputs] = useState({
@@ -288,7 +289,13 @@ const MainPanel = ({ data, onAdd, onDelete, onDeleteMultiple, onItemClick, filte
             <Routes>
                 <Route path="/" element={<Navigate to="/tasks" replace />} />
 
-                <Route path="/tasks" element={renderList('tasks', data.tasks, ['STATUS', 'TASK', 'DATE'], (item) => (
+                <Route path="/tasks" element={renderList('tasks', data.tasks.filter(task => {
+                    if (task.status === 'COMPLETED') return true;
+                    // Check if date is past
+                    if (!task.date) return true;
+                    const today = new Date().toISOString().split('T')[0];
+                    return task.date >= today;
+                }), ['STATUS', 'TASK', 'DATE'], (item) => (
                     <>
                         <Cell value={item.status} />
                         <Cell value={item.text} />
@@ -313,13 +320,13 @@ const MainPanel = ({ data, onAdd, onDelete, onDeleteMultiple, onItemClick, filte
                     </>
                 ))} />
 
-                <Route path="/habits" element={renderList('habits', data.habits || [], ['HABIT', 'FREQUENCY', 'DATE'], (item) => (
-                    <>
-                        <Cell value={item.text} />
-                        <Cell value={item.frequency} />
-                        <Cell value={item.date} />
-                    </>
-                ))} />
+                <Route path="/habits" element={<HabitsTab
+                    habits={data.habits || []}
+                    onAdd={onAdd}
+                    onUpdate={onUpdate}
+                    onDelete={onDelete}
+                    onItemClick={onItemClick}
+                />} />
             </Routes>
 
             {contextMenu && (

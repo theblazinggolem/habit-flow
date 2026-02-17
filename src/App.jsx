@@ -147,6 +147,7 @@ function App() {
                 selectedItem={selectedItem}
                 onClose={handleCloseModal}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
                 tags={tags}
                 onAddTag={handleAddTag}
             />

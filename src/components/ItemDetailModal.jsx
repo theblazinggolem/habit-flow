@@ -4,7 +4,7 @@ import Modal from './Modal';
 import { STATUS_OPTS, TAG_OPTS, PRIORITY_OPTS, REPEAT_OPTS, FREQ_OPTS } from '../constants';
 import CustomSelect from './CustomSelect';
 
-const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag }) => {
+const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [], onAddTag }) => {
     // Local State
     const [editForm, setEditForm] = useState({});
     const [isEditing, setIsEditing] = useState(false);
@@ -198,7 +198,21 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
             onClose={onClose}
             title={`${labelTitle} DETAILS`}
         >
-            <div className="modal-header-actions" style={{ position: 'absolute', top: '40px', right: '40px', marginRight: '40px' }}>
+            <div className="modal-header-actions" style={{ position: 'absolute', top: '40px', right: '40px', marginRight: '40px', display: 'flex', gap: '10px' }}>
+                <button
+                    className="btn-save"
+                    style={{ backgroundColor: 'var(--danger-color)', color: '#fff' }}
+                    onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this item?")) {
+                            onDelete(itemType, selectedItem.id);
+                            toast.success("Item deleted");
+                            onClose();
+                        }
+                    }}
+                >
+                    DELETE
+                </button>
+
                 <button className="btn-save" onClick={handleMainAction}>
                     {getButtonText()}
                 </button>
@@ -350,22 +364,102 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
             )}
 
             {itemType === 'habits' && (
-                <DetailRow
-                    fieldName="frequency"
-                    label="FREQUENCY"
-                    value={editForm.frequency}
-                    renderInput={() => (
-                        <div style={{ width: '200px' }}>
-                            <CustomSelect
-                                options={FREQ_OPTS}
-                                value={editForm.frequency}
-                                onChange={(val) => handleEditChange('frequency', val)}
-                                placeholder="FREQUENCY"
-                                multiple={false}
-                            />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    {/* Stats Grid */}
+                    <div className="habit-stats-grid">
+                        <div className="stat-card">
+                            <span className="stat-label">CURRENT STREAK</span>
+                            <span className="stat-value">
+                                {(function () {
+                                    const completions = selectedItem.completions || [];
+                                    if (completions.length === 0) return 0;
+
+                                    const toLocalISOString = (date) => {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        return `${year}-${month}-${day}`;
+                                    };
+
+                                    const sorted = [...completions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                                    let currentStreak = 0;
+                                    let d = new Date();
+
+                                    let todayStr = toLocalISOString(d);
+                                    let hasToday = sorted.some(c => c.date === todayStr);
+
+                                    if (!hasToday) {
+                                        d.setDate(d.getDate() - 1);
+                                        todayStr = toLocalISOString(d);
+                                        if (!sorted.some(c => c.date === todayStr)) return 0;
+                                    }
+
+                                    while (true) {
+                                        const ds = toLocalISOString(d);
+                                        if (sorted.some(c => c.date === ds)) {
+                                            currentStreak++;
+                                            d.setDate(d.getDate() - 1);
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    return currentStreak;
+                                })()} DAYS
+                            </span>
                         </div>
-                    )}
-                />
+                        <div className="stat-card">
+                            <span className="stat-label">TOTAL COMPLETIONS</span>
+                            <span className="stat-value">
+                                {(function () {
+                                    const completions = selectedItem.completions || [];
+                                    const completedCount = completions.length;
+
+                                    const startDate = new Date(selectedItem.date);
+                                    const today = new Date();
+                                    const diffTime = Math.abs(today - startDate);
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include start day
+
+                                    let possible;
+                                    if (selectedItem.frequency === 'DAILY') {
+                                        possible = diffDays;
+                                    } else if (selectedItem.frequency === 'WEEKLY') {
+                                        possible = Math.ceil(diffDays / 7);
+                                    } else if (selectedItem.frequency === 'MONTHLY') {
+                                        // Approximate months
+                                        possible = (today.getFullYear() - startDate.getFullYear()) * 12 + (today.getMonth() - startDate.getMonth()) + 1;
+                                    } else {
+                                        possible = diffDays; // default
+                                    }
+
+                                    // Guard against 0 or negative
+                                    if (possible < 1) possible = 1;
+
+                                    return `${completedCount} / ${possible}`;
+                                })()}
+                            </span>
+                        </div>
+                    </div>
+
+
+
+                    <DetailRow
+                        fieldName="frequency"
+                        label="FREQUENCY"
+                        value={editForm.frequency}
+                        renderInput={() => (
+                            <div style={{ width: '200px' }}>
+                                <CustomSelect
+                                    options={FREQ_OPTS}
+                                    value={editForm.frequency}
+                                    onChange={(val) => handleEditChange('frequency', val)}
+                                    placeholder="FREQUENCY"
+                                    multiple={false}
+                                />
+                            </div>
+                        )}
+                    />
+                </div>
             )}
 
             <DetailRow
@@ -381,36 +475,37 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, tags = [], onAddTag 
                     <div style={{ display: 'flex', alignItems: 'center', width: '200px' }}>
                         <input
                             className="detail-input"
-                            type="text"
+                            type="date"
                             value={editForm.date || ''}
                             onChange={(e) => handleEditChange('date', e.target.value)}
                             autoFocus
-                            placeholder="YYYY-MM-DD"
                         />
                     </div>
                 )}
             />
 
-            <div style={{ marginTop: '10px' }}>
-                <span className="detail-label">NOTES</span>
-                {(isEditing || activeField === 'notes') ? (
-                    <textarea
-                        className="detail-notes-input"
-                        placeholder="Add notes..."
-                        value={editForm.notes || ''}
-                        onChange={(e) => handleEditChange('notes', e.target.value)}
-                        autoFocus
-                    />
-                ) : (
-                    <div
-                        className="detail-notes"
-                        onClick={() => setActiveField('notes')}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {editForm.notes || "No notes"}
-                    </div>
-                )}
-            </div>
+            {!['habits', 'goals'].includes(itemType) && (
+                <div style={{ marginTop: '10px' }}>
+                    <span className="detail-label">NOTES</span>
+                    {(isEditing || activeField === 'notes') ? (
+                        <textarea
+                            className="detail-notes-input"
+                            placeholder="Add notes..."
+                            value={editForm.notes || ''}
+                            onChange={(e) => handleEditChange('notes', e.target.value)}
+                            autoFocus
+                        />
+                    ) : (
+                        <div
+                            className="detail-notes"
+                            onClick={() => setActiveField('notes')}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {editForm.notes || "No notes"}
+                        </div>
+                    )}
+                </div>
+            )}
         </Modal>
     );
 };

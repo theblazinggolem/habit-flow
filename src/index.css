@@ -303,6 +303,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: opacity 0.2s;
 }
 
+input[type="date"] {
+  color-scheme: dark;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
@@ -502,17 +506,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .upcoming-item {
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   padding: 15px;
   background-color: var(--bg-hover);
-  transition: transform 0.2s, background-color 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
   cursor: pointer;
 }
 
 .upcoming-item:hover {
-  transform: translateX(4px);
+  /* transform: translateX(4px); REMOVED */
   background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 .up-meta {
@@ -984,3 +990,298 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: #FFFFFF;
   border-color: #FFFFFF;
 }
+
+/* --- HABIT HEATMAP --- */
+.habit-contribution-graph {
+  margin-top: 5px;
+  width: 100%;
+}
+
+.react-calendar-heatmap text {
+  display: none;
+}
+
+.react-calendar-heatmap .color-empty {
+  fill: var(--bg-hover-strong);
+  /* Lighter grey to be visible */
+}
+
+/* GitHub-like Green Scale (or monochrome white as requested) */
+.react-calendar-heatmap .color-scale-1 {
+  fill: #3f3f46;
+}
+
+/* Slightly lighter than empty */
+.react-calendar-heatmap .color-scale-2 {
+  fill: #71717a;
+}
+
+.react-calendar-heatmap .color-scale-3 {
+  fill: #a1a1aa;
+}
+
+.react-calendar-heatmap .color-scale-4 {
+  fill: #ffffff;
+}
+
+.react-calendar-heatmap rect {
+  rx: 3px;
+  ry: 3px;
+  /* Removed stroke to prevent gap issues */
+  shape-rendering: geometricPrecision;
+  transition: fill 0.2s;
+}
+
+.react-calendar-heatmap rect:hover {
+  stroke: var(--text-primary);
+  stroke-width: 1px;
+}
+
+/* --- HABITS TAB --- */
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background-color: var(--bg-hover);
+  /* Initial background */
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.habit-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  /* Slightly lighter on hover */
+  /* transform: translateX(4px); REMOVED */
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.habit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.habit-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.habit-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.habit-streak {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.habit-days {
+  display: flex;
+  gap: 6px;
+}
+
+.day-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #333;
+  border: 1px solid #444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.day-check.completed {
+  background-color: var(--text-primary);
+  border-color: var(--text-primary);
+  color: #000;
+}
+
+.day-check:hover:not(.completed) {
+  border-color: var(--text-secondary);
+}
+
+/* --- HEATMAP --- */
+.react-calendar-heatmap {
+  width: 100%;
+  font-size: 10px;
+}
+
+.react-calendar-heatmap text {
+  fill: var(--text-secondary);
+  font-family: var(--font-family);
+}
+
+.react-calendar-heatmap rect {
+  rx: 2;
+  /* Rounded corners for squares */
+  ry: 2;
+  stroke: var(--bg-panel);
+  /* Spacing between squares */
+  stroke-width: 2px;
+}
+
+/* Color scales */
+.react-calendar-heatmap .color-empty {
+  fill: #222;
+}
+
+.react-calendar-heatmap .color-scale-1 {
+  fill: #2e2e2e;
+}
+
+.react-calendar-heatmap .color-scale-2 {
+  fill: #4a4a4a;
+}
+
+.react-calendar-heatmap .color-scale-3 {
+  fill: #888888;
+}
+
+.react-calendar-heatmap .color-scale-4 {
+  fill: #ffffff;
+}
+
+/* Habit Stats in Modal */
+.habit-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background-color: var(--bg-hover);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+/* --- HABIT CHECKBOX SIZING --- */
+/* --- HABIT CHECKBOX SIZING --- */
+.day-check {
+  width: 28px;
+  height: 28px;
+  opacity: 1;
+  border-radius: 6px;
+  background-color: transparent;
+  border: 2px solid #FFFFFF;
+  /* White borders for all */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  /* Checkmark color */
+}
+
+/* Today's checkbox */
+.day-check.is-today {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+  /* Slightly thicker for importance */
+  border-color: #FFFFFF;
+  cursor: pointer;
+}
+
+/* Completed Today Highlighting */
+.day-check.completed {
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #000;
+}
+
+/* Read-Only State (Previous Days) */
+.day-check.read-only {
+  cursor: default;
+  pointer-events: none;
+  /* border-color: #FFFFFF;  Already set globally */
+}
+
+/* Specific override if today is NOT completed */
+.day-check.is-today:not(.completed) {
+  background-color: transparent;
+}
+
+.habit-days {
+  align-items: center;
+  /* Center align differing heights */
+}
+
+/* --- HABIT ROW ALIGNMENT FIX --- */
+/* Override previous habit-info */
+.habit-row .habit-info {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Override previous habit-name */
+.habit-row .habit-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+/* Style for SVG icon inside streak */
+.habit-streak img {
+  width: 14px;
+  height: 14px;
+}
+
+/* Ensure gap between icon and count */
+.habit-streak span {
+  display: inline-block;
+  margin-left: 4px;
+}
+
+/* Style habit streak container itself */
+.habit-streak {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+/* Override previous habit-row padding/gap is okay */
