@@ -3,3 +3,7 @@ archive
 .env
 .DS_Store
 *.zip
+dist
+backend/venv
+backend/__pycache__
+*.pyc
