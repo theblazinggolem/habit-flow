@@ -10,7 +10,7 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
     // Local state for inputs
     const [inputs, setInputs] = useState({
         text: '',
-        tag: [],
+        tags: [],
         priority: '', // Empty to show placeholder
         repeat: 'NONE',
         freq: 'DAILY',
@@ -38,8 +38,8 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
 
         if (type === 'tasks') {
             newItem.status = "NOT STARTED";
-            // Use array directly from inputs.tag or default
-            newItem.tag = (inputs.tag && inputs.tag.length > 0) ? inputs.tag : ["PROJECTS"];
+            // Use array directly from inputs.tags or default
+            newItem.tags = (inputs.tags && inputs.tags.length > 0) ? inputs.tags : [];
         } else if (type === 'goals') {
             newItem.priority = inputs.priority || "MEDIUM";
         } else if (type === 'reminders') {
@@ -52,7 +52,7 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
 
         onAdd(type, newItem);
         toast.success("New item added successfully");
-        setInputs(prev => ({ ...prev, text: '', tag: [], priority: '' }));
+        setInputs(prev => ({ ...prev, text: '', tags: [], priority: '' }));
     };
 
     const panelRef = useRef(null);
@@ -88,11 +88,9 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
         if (contextMenu) {
             if (selectedIds.length > 1 && selectedIds.includes(contextMenu.id)) {
                 onDeleteMultiple(contextMenu.type, selectedIds);
-                toast.success(`${selectedIds.length} items deleted`);
                 setSelectedIds([]);
             } else {
                 onDelete(contextMenu.type, contextMenu.id);
-                toast.success("Item deleted");
                 setSelectedIds(prev => prev.filter(id => id !== contextMenu.id));
             }
             closeContextMenu();
@@ -213,8 +211,8 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
                     <div style={{ width: '200px' }}>
                         <CustomSelect
                             options={tags}
-                            value={inputs.tag}
-                            onChange={(val) => handleChange('tag', val)}
+                            value={inputs.tags}
+                            onChange={(val) => handleChange('tags', val)}
                             placeholder="TAGS"
                             multiple={true}
                             direction="up"
@@ -290,8 +288,6 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
                 <Route path="/" element={<Navigate to="/tasks" replace />} />
 
                 <Route path="/tasks" element={renderList('tasks', data.tasks.filter(task => {
-                    if (task.status === 'COMPLETED') return true;
-                    // Check if date is past
                     if (!task.date) return true;
                     const today = new Date().toISOString().split('T')[0];
                     return task.date >= today;
@@ -303,7 +299,11 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
                     </>
                 ))} />
 
-                <Route path="/goals" element={renderList('goals', data.goals, ['GOAL', 'PRIORITY', 'DATE'], (item) => (
+                <Route path="/goals" element={renderList('goals', data.goals.filter(goal => {
+                    if (!goal.date) return true;
+                    const today = new Date().toISOString().split('T')[0];
+                    return goal.date >= today;
+                }), ['GOAL', 'PRIORITY', 'DATE'], (item) => (
                     <>
                         <Cell value={item.text} />
                         <Cell value={item.priority} />
@@ -337,8 +337,8 @@ const MainPanel = ({ data, onAdd, onUpdate, onDelete, onDeleteMultiple, onItemCl
                 >
                     <div className="ctx-item" onClick={handleDelete}>
                         {selectedIds.length > 1 && selectedIds.includes(contextMenu.id)
-                            ? `Delete Selected (${selectedIds.length})`
-                            : 'Delete Item'
+                            ? contextMenu.type === 'habits' ? `Archive Selected (${selectedIds.length})` : `Delete Selected (${selectedIds.length})`
+                            : contextMenu.type === 'habits' ? 'Archive Habit' : 'Delete Item'
                         }
                     </div>
                 </div>

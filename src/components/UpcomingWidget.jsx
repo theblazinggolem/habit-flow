@@ -11,15 +11,17 @@ const UpcomingWidget = ({ data, filterDate, setFilterDate, onItemClick }) => {
         titleText = `EVENTS: ${filterDate}`;
         filterFn = (item) => item.date === filterDate;
     } else {
-        titleText = "UPCOMING (7 DAYS)";
         const nextWeek = new Date(today);
         nextWeek.setDate(today.getDate() + 7);
 
+        // Adjust today to string
+        const todayStr = today.toISOString().split('T')[0];
+        const nextWeekStr = nextWeek.toISOString().split('T')[0];
+
+        titleText = "UPCOMING (7 DAYS)";
         filterFn = (item) => {
             if (!item.date) return false;
-            const d = new Date(item.date);
-            d.setHours(0, 0, 0, 0);
-            return d >= today && d <= nextWeek;
+            return item.date >= todayStr && item.date <= nextWeekStr;
         };
     }
 

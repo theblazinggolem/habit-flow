@@ -8,7 +8,7 @@ import ItemDetailModal from './components/ItemDetailModal';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import UserProfileModal from './components/UserProfileModal';
-import INITIAL_TAGS from '../data/tags.json';
+
 
 const INITIAL_DATA = {
     tasks: [],
@@ -69,7 +69,9 @@ const ProtectedLayout = ({ user, onLogout }) => {
     const [filterDate, setFilterDate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [tags, setTags] = useState(INITIAL_TAGS);
+    const [tags, setTags] = useState(() => {
+        return user?.custom_tags || [];
+    });
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     useEffect(() => {
@@ -163,44 +165,100 @@ const ProtectedLayout = ({ user, onLogout }) => {
         }
     };
 
-    const handleDelete = async (type, id) => {
-        // Optimistic
+    const handleDelete = (type, id) => {
         const originalList = data[type];
+        const itemToDelete = originalList.find(i => i.id === id);
+
+        // Optimistic UI Removal
         setData(prev => ({ ...prev, [type]: prev[type].filter(i => i.id !== id) }));
 
-        try {
-            const res = await fetch(`/api/${type}/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error("Delete failed");
-        } catch (err) {
-            toast.error("Failed to delete item");
-            setData(prev => ({ ...prev, [type]: originalList }));
-        }
+        let isReverted = false;
+
+        const executeDelete = async () => {
+            if (isReverted) return;
+            try {
+                const res = await fetch(`/api/${type}/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error("Delete failed");
+            } catch (err) {
+                toast.error("Failed to delete item");
+                setData(prev => ({ ...prev, [type]: originalList }));
+            }
+        };
+
+        const timeoutId = window.setTimeout(executeDelete, 4500);
+
+        toast.success(type === 'habits' ? "Habit archived" : "Item deleted", {
+            action: {
+                label: 'UNDO',
+                onClick: () => {
+                    isReverted = true;
+                    clearTimeout(timeoutId);
+                    // Add back optimistically
+                    setData(prev => ({ ...prev, [type]: [...prev[type], itemToDelete] }));
+                }
+            },
+            actionButtonStyle: { backgroundColor: '#fff', color: '#09090B' }
+        });
     };
 
-    const handleDeleteMultiple = async (type, ids) => {
+    const handleDeleteMultiple = (type, ids) => {
         // Optimistic
         const originalList = data[type];
+        const itemsToDelete = originalList.filter(i => ids.includes(i.id));
+
         setData(prev => ({ ...prev, [type]: prev[type].filter(i => !ids.includes(i.id)) }));
 
-        try {
-            await Promise.all(ids.map(id => fetch(`/api/${type}/${id}`, { method: 'DELETE' })));
-        } catch (err) {
-            toast.error("Failed to delete items");
-            setData(prev => ({ ...prev, [type]: originalList }));
-        }
+        let isReverted = false;
+
+        const executeDelete = async () => {
+            if (isReverted) return;
+            try {
+                await Promise.all(ids.map(id => fetch(`/api/${type}/${id}`, { method: 'DELETE' })));
+            } catch (err) {
+                toast.error("Failed to delete items");
+                setData(prev => ({ ...prev, [type]: originalList }));
+            }
+        };
+
+        const timeoutId = window.setTimeout(executeDelete, 4500);
+
+        toast.success(type === 'habits' ? `${ids.length} habits archived` : `${ids.length} items deleted`, {
+            action: {
+                label: 'UNDO',
+                onClick: () => {
+                    isReverted = true;
+                    clearTimeout(timeoutId);
+                    // Add back optimistically
+                    setData(prev => ({ ...prev, [type]: [...prev[type], ...itemsToDelete] }));
+                }
+            },
+            actionButtonStyle: { backgroundColor: '#fff', color: '#09090B' }
+        });
     };
 
     const handleItemClick = (type, item) => setSelectedItem({ ...item, type });
     const handleCloseModal = () => setSelectedItem(null);
 
-    const handleAddTag = (newTagInput) => {
+    const handleAddTag = async (newTagInput) => {
         let newTag = newTagInput;
         if (!newTag || typeof newTag !== 'string') newTag = window.prompt("Enter new tag name:");
         if (newTag) {
             const normalized = newTag.trim().toUpperCase();
             if (normalized && !tags.includes(normalized)) {
-                setTags(prev => [...prev, normalized]);
-                toast.success(`Tag "${normalized}" created`);
+                const newTagsList = [...tags, normalized];
+                setTags(newTagsList);
+
+                // Save custom tags to backend
+                try {
+                    await fetch('/api/user/tags', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tags: newTagsList })
+                    });
+                    toast.success(`Tag "${normalized}" created`);
+                } catch (err) {
+                    toast.error("Failed to save tag to backend");
+                }
             }
         }
     }

@@ -14,8 +14,9 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from sqlalchemy.types import JSON
+from sqlalchemy import text
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 app = Flask(__name__, static_folder="../dist")
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -32,6 +33,23 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+# Auto-patch the schema dynamically without crashing 
+with app.app_context():
+    columns_to_handle = [
+        "ALTER TABLE habits ADD COLUMN is_archived BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE habits ADD COLUMN streak INTEGER DEFAULT 0",
+        "ALTER TABLE habits ADD COLUMN date VARCHAR(20)",
+        "ALTER TABLE habits ADD COLUMN frequency VARCHAR(50)",
+        "ALTER TABLE habits ADD COLUMN completions JSONB DEFAULT '[]'::jsonb",
+        "ALTER TABLE users ADD COLUMN custom_tags JSONB DEFAULT '[]'::jsonb"
+    ]
+    for statement in columns_to_handle:
+        try:
+            db.session.execute(text(statement))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
 # JSON-based login view (optional, since we handle 401 manually often)
 login_manager.login_view = None
 
@@ -40,12 +58,13 @@ login_manager.login_view = None
 def catch_all(path):
     if path.startswith("api"):
         return jsonify({"error": "Not found"}), 404
-    
-    # Check if file exists in dist (e.g. assets)
+
+
     if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
         
     return send_from_directory(app.static_folder, "index.html")
+
 
 
 # ================= MODELS =================
@@ -56,6 +75,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    custom_tags = db.Column(JSON, default=list)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def set_password(self, password):
@@ -71,7 +91,7 @@ class Task(db.Model):
     # If frontend sends Date.now(), it's a big integer. 
     # Better to map frontend ID if provided, or generate new UUID if not. 
     # Frontend uses Date.now(). Let's stick to BigInt or String.
-    # Actually, let's use String to be safe with UUIDs or BigInts.
+    # Actually, let's use String to be safe with UUIDs or BigInts. 
     id = db.Column(db.String(50), primary_key=True) 
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)
     text = db.Column(db.Text, nullable=False)
@@ -79,6 +99,7 @@ class Task(db.Model):
     tags = db.Column(JSON, default=list) # Store tags as JSON array
     status = db.Column(db.String(50), default="NOT STARTED")
     note = db.Column(db.Text)
+    
 
 
 class Goal(db.Model):
@@ -106,8 +127,10 @@ class Habit(db.Model):
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=False)
     text = db.Column(db.Text, nullable=False)
     frequency = db.Column(db.String(50))
+    date = db.Column(db.String(20))
     completions = db.Column(JSON, default=list) # Array of objects {date: ...}
     streak = db.Column(db.Integer, default=0)
+    is_archived = db.Column(db.Boolean, default=False)
 
 
 @login_manager.user_loader
@@ -149,7 +172,7 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
-        return jsonify({"success": True, "user": {"id": new_user.id, "email": new_user.email, "username": new_user.username}})
+        return jsonify({"success": True, "user": {"id": new_user.id, "email": new_user.email, "username": new_user.username, "custom_tags": new_user.custom_tags or []}})
     except Exception as e:
         db.session.rollback()
         print(f"Signup error: {e}")
@@ -165,7 +188,7 @@ def login():
 
     if user and user.check_password(password):
         login_user(user, remember=True)
-        return jsonify({"success": True, "user": {"id": user.id, "email": user.email, "username": user.username}})
+        return jsonify({"success": True, "user": {"id": user.id, "email": user.email, "username": user.username, "custom_tags": user.custom_tags or []}})
     
     return jsonify({"error": "Invalid credentials"}), 401
 
@@ -180,8 +203,18 @@ def logout():
 @app.route("/api/check-auth")
 def check_auth():
     if current_user.is_authenticated:
-        return jsonify({"authenticated": True, "user": {"id": current_user.id, "email": current_user.email, "username": current_user.username}})
+        return jsonify({"authenticated": True, "user": {"id": current_user.id, "email": current_user.email, "username": current_user.username, "custom_tags": current_user.custom_tags or []}})
     return jsonify({"authenticated": False}), 401
+
+
+@app.route("/api/user/tags", methods=["PUT"])
+@login_required
+def update_user_tags():
+    data = request.json
+    tags = data.get("tags", [])
+    current_user.custom_tags = tags
+    db.session.commit()
+    return jsonify({"success": True, "tags": current_user.custom_tags})
 
 
 # ================= CRUD HELPERS =================
@@ -189,11 +222,19 @@ def check_auth():
 def generic_get(Model, sort_key=None):
     if not current_user.is_authenticated:
         return jsonify([]), 401
+    
     query = Model.query.filter_by(user_id=current_user.id)
+        
     items = query.all()
     # Serialize
     result = []
     for item in items:
+        # Protects against schema missing real column errors
+        try:
+            if getattr(item, 'is_archived', False): continue
+        except Exception:
+            pass
+            
         # Convert model object to dict safely
         d = {}
         for column in item.__table__.columns:
@@ -301,7 +342,17 @@ def add_habit(): return generic_add(Habit)
 def update_habit(id): return generic_update(Habit, id)
 
 @app.route("/api/habits/<id>", methods=["DELETE"])
-def delete_habit(id): return generic_delete(Habit, id)
+def delete_habit(id): 
+    # Logic to archive instead of delete
+    if not current_user.is_authenticated:
+        return jsonify({"error": "Unauthorized"}), 401
+    item = db.session.get(Habit, str(id))
+    if not item or item.user_id != current_user.id:
+        return jsonify({"error": "Not found"}), 404
+        
+    item.is_archived = True
+    db.session.commit()
+    return jsonify({"success": True})
 
 
 if __name__ == "__main__":

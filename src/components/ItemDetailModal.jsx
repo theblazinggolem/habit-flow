@@ -13,14 +13,14 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
     // Initial sync
     useEffect(() => {
         if (selectedItem) {
-            let tags = selectedItem.tag;
+            let tags = selectedItem.tags;
             if (typeof tags === 'string') {
                 tags = [tags];
             } else if (!tags) {
                 tags = [];
             }
             // Ensure tags is array for editForm
-            setEditForm({ ...selectedItem, tag: tags, notes: selectedItem.notes || '' });
+            setEditForm({ ...selectedItem, tags: tags, notes: selectedItem.notes || '' });
             setIsEditing(false);
             setActiveField(null);
         } else {
@@ -34,7 +34,7 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
 
     const handleTagEditChange = (value) => {
         // Value from CustomSelect is already an array for multi-select
-        setEditForm(prev => ({ ...prev, tag: value }));
+        setEditForm(prev => ({ ...prev, tags: value }));
     };
 
     const saveChanges = () => {
@@ -48,11 +48,11 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
 
         const finalUpdates = { ...editForm };
 
-        // Ensure tag is array for tasks
+        // Ensure tags is array for tasks
         if (updateType === 'tasks') {
             // It should be array from CustomSelect
-            if (!Array.isArray(finalUpdates.tag)) {
-                finalUpdates.tag = [];
+            if (!Array.isArray(finalUpdates.tags)) {
+                finalUpdates.tags = [];
             }
         }
 
@@ -145,18 +145,31 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
             let val1 = editForm[key];
             let val2 = selectedItem[key];
 
+            // Ignore fields we shouldn't compare
+            if (['completions', 'streak', 'type', 'id'].includes(key)) continue;
+
             // Normalize tags for comparison
-            if (key === 'tag') {
+            if (key === 'tags' || key === 'tag') {
                 if (!val1) val1 = [];
                 if (!val2) val2 = [];
+                if (typeof val1 === 'string') val1 = [val1];
                 if (typeof val2 === 'string') val2 = [val2];
                 if (JSON.stringify(val1) !== JSON.stringify(val2)) return true;
                 continue;
             }
-            // Normalize notes
-            if (key === 'notes') {
+
+            // Normalize notes/note mapping
+            if (key === 'notes' || key === 'note') {
                 if (!val1) val1 = '';
                 if (!val2) val2 = '';
+                if (val1 !== val2) return true;
+                continue;
+            }
+
+            // Handle undefined vs null vs empty string
+            if ((val1 === undefined || val1 === null || val1 === '') &&
+                (val2 === undefined || val2 === null || val2 === '')) {
+                continue;
             }
 
             if (JSON.stringify(val1) !== JSON.stringify(val2)) return true;
@@ -178,16 +191,16 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
             setActiveField(null);
             // Revert changes
             if (selectedItem) {
-                let tags = selectedItem.tag;
+                let tags = selectedItem.tags;
                 if (typeof tags === 'string') tags = [tags];
                 else if (!tags) tags = [];
-                setEditForm({ ...selectedItem, tag: tags, notes: selectedItem.notes || '' });
+                setEditForm({ ...selectedItem, tags: tags, notes: selectedItem.notes || '' });
             }
         }
     };
 
     const getButtonText = () => {
-        if (hasChanges) return "SAVE CHANGES";
+        if (hasChanges) return "SAVE";
         if (!isEditing) return "EDIT";
         return "CANCEL";
     };
@@ -199,19 +212,20 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
             title={`${labelTitle} DETAILS`}
         >
             <div className="modal-header-actions" style={{ position: 'absolute', top: '40px', right: '40px', marginRight: '40px', display: 'flex', gap: '10px' }}>
-                <button
-                    className="btn-save"
-                    style={{ backgroundColor: 'var(--danger-color)', color: '#fff' }}
-                    onClick={() => {
-                        if (window.confirm("Are you sure you want to delete this item?")) {
-                            onDelete(itemType, selectedItem.id);
-                            toast.success("Item deleted");
-                            onClose();
-                        }
-                    }}
-                >
-                    DELETE
-                </button>
+                {itemType === 'habits' && (
+                    <button
+                        className="btn-save"
+                        style={{ backgroundColor: 'var(--danger-color)', color: '#fff' }}
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to archive this habit?")) {
+                                onDelete(itemType, selectedItem.id);
+                                onClose();
+                            }
+                        }}
+                    >
+                        ARCHIVE
+                    </button>
+                )}
 
                 <button className="btn-save" onClick={handleMainAction}>
                     {getButtonText()}
@@ -253,7 +267,7 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
                     <div className="detail-row" style={{ alignItems: 'flex-start' }}>
                         <span className="detail-label" style={{ marginTop: '8px' }}>TAGS</span>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {editForm.tag && editForm.tag.map((tag, idx) => (
+                            {editForm.tags && editForm.tags.map((tag, idx) => (
                                 <div key={idx} className="tag-chip" style={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -271,7 +285,7 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
                                         <span
                                             style={{ cursor: 'pointer', marginLeft: '4px', opacity: 0.7, display: 'flex', alignItems: 'center' }}
                                             onClick={() => {
-                                                const newTags = editForm.tag.filter(t => t !== tag);
+                                                const newTags = editForm.tags.filter(t => t !== tag);
                                                 handleTagEditChange(newTags);
                                             }}
                                         >
@@ -283,7 +297,7 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
                             <div style={{ width: '40px' }}>
                                 <CustomSelect
                                     options={tags}
-                                    value={editForm.tag}
+                                    value={editForm.tags}
                                     onChange={handleTagEditChange}
                                     placeholder=""
                                     multiple={true}
@@ -415,10 +429,11 @@ const ItemDetailModal = ({ selectedItem, onClose, onUpdate, onDelete, tags = [],
                                     const completions = selectedItem.completions || [];
                                     const completedCount = completions.length;
 
-                                    const startDate = new Date(selectedItem.date);
+                                    const startDateStr = selectedItem.date || new Date().toISOString().split('T')[0];
+                                    const startDate = new Date(startDateStr);
                                     const today = new Date();
-                                    const diffTime = Math.abs(today - startDate);
-                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include start day
+                                    const diffTime = today - startDate;
+                                    const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
                                     let possible;
                                     if (selectedItem.frequency === 'DAILY') {
